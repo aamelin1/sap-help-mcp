@@ -1,0 +1,20 @@
+# Files excluded from the .mcpb bundle (mcpb pack).
+# The uv runtime resolves dependencies from pyproject.toml on the user's machine,
+# so nothing pre-installed may be shipped.
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.git/
+.github/
+.gitignore
+tests/
+docs/
+CLAUDE.md
+CHANGELOG.md
+*.mcpb
+.DS_Store

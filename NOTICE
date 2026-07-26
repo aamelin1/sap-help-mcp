@@ -1,0 +1,45 @@
+sap-help-mcp
+Copyright 2026 Andrey Amelin
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+
+-------------------------------------------------------------------------------
+Third-party attribution
+-------------------------------------------------------------------------------
+
+This product includes work derived from mcp-sap-docs:
+
+    mcp-sap-docs
+    Copyright Marian Zeis and contributors
+    https://github.com/marianfoo/mcp-sap-docs
+    Licensed under the Apache License, Version 2.0
+
+Specifically, the request shapes used to talk to the undocumented help.sap.com
+JSON endpoints (`/http.svc/elasticsearch`, `/http.svc/deliverableMetadata`,
+`/http.svc/pagecontent`), and the idea of client-side relevance ranking for the
+SAP Community Khoros LiQL API, were derived from that project's
+`src/lib/sapHelp.ts` and `src/lib/communityBestMatch.ts`.
+
+The implementation in this repository is an independent rewrite in Python; no
+source code was copied verbatim.
+
+
+-------------------------------------------------------------------------------
+Trademarks and content ownership
+-------------------------------------------------------------------------------
+
+SAP, SAP S/4HANA, SAP ERP, ABAP and other SAP product names are trademarks or
+registered trademarks of SAP SE (or an SAP affiliate company) in Germany and
+other countries. This project is not affiliated with, endorsed by, or sponsored
+by SAP SE.
+
+All documentation and forum content reachable through this server remains the
+property of SAP SE and the respective authors. The server only issues requests
+to publicly accessible endpoints of help.sap.com and community.sap.com, stores
+nothing on disk, and redistributes nothing. Users are responsible for complying
+with the terms of use of those portals.

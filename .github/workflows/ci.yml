@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: pytest (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Run the offline test suite
+        run: uv run --python ${{ matrix.python }} --extra dev pytest
+
+      - name: Console script is installed and runnable
+        run: uv run --python ${{ matrix.python }} sap-help-mcp --version
+
+  versions-agree:
+    name: version numbers agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare pyproject.toml, __init__.py and manifest.json
+        run: |
+          python - <<'PY'
+          import json, pathlib, re, sys
+
+          root = pathlib.Path(".")
+          pyproject = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
+                                (root / "pyproject.toml").read_text()).group(1)
+          package = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"',
+                              (root / "src/sap_help_mcp/__init__.py").read_text()).group(1)
+          manifest = json.loads((root / "manifest.json").read_text())["version"]
+
+          print(f"pyproject={pyproject} package={package} manifest={manifest}")
+          if not pyproject == package == manifest:
+              sys.exit("Version mismatch: bump all three together.")
+          PY
+
+  bundle-builds:
+    name: .mcpb bundle packs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Pack the bundle
+        run: npx --yes @anthropic-ai/mcpb pack . sap-help-mcp.mcpb
+      - name: Show what ended up inside
+        run: unzip -l sap-help-mcp.mcpb

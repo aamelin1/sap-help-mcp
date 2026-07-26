@@ -1,0 +1,57 @@
+{
+  "manifest_version": "0.4",
+  "name": "sap-help-mcp",
+  "display_name": "SAP Help & Community Search",
+  "version": "1.0.0",
+  "description": "Search SAP Help Portal and SAP Community live, so answers come from the documentation instead of memory.",
+  "long_description": "Gives the assistant four read-only tools over two public SAP sources.\n\n**help.sap.com** — official documentation for every SAP product, including the Support Content space: the FAQs, troubleshooting guides and customizing instructions written by SAP support.\n\n**community.sap.com** — blogs, Q&A and discussions, ranked on the client side because the forum API returns unranked, OR-matched results.\n\nNo credentials are required and nothing is stored on disk. SAP Notes are deliberately out of scope: reading them needs a personal S-user, so use a dedicated SAP Notes server alongside this one.\n\nQueries are sent to the portals in English; ask your question in any language and the assistant translates it into SAP terminology itself.",
+  "author": {
+    "name": "Andrey Amelin",
+    "url": "https://github.com/aamelin1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aamelin1/sap-help-mcp.git"
+  },
+  "homepage": "https://github.com/aamelin1/sap-help-mcp",
+  "documentation": "https://github.com/aamelin1/sap-help-mcp#readme",
+  "support": "https://github.com/aamelin1/sap-help-mcp/issues",
+  "icon": "icon.png",
+  "server": {
+    "type": "uv",
+    "entry_point": "src/sap_help_mcp/__main__.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${__dirname}", "src/sap_help_mcp/__main__.py"]
+    }
+  },
+  "tools": [
+    {
+      "name": "help_search",
+      "description": "Search help.sap.com: SAP product documentation and the Support Content wiki"
+    },
+    {
+      "name": "help_read",
+      "description": "Read a full help.sap.com page as markdown"
+    },
+    {
+      "name": "community_search",
+      "description": "Search SAP Community blogs, Q&A and discussions"
+    },
+    {
+      "name": "web_status",
+      "description": "Server version, source endpoints and cache state"
+    }
+  ],
+  "keywords": ["sap", "s4hana", "abap", "documentation", "search", "erp"],
+  "license": "Apache-2.0",
+  "privacy_policies": [
+    "https://www.sap.com/about/legal/privacy.html"
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.10"
+    }
+  }
+}

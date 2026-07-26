@@ -1,0 +1,205 @@
+# sap-help-mcp
+
+**Stop your AI assistant from guessing at SAP configuration.** This MCP server gives
+it live access to the two places the answer actually lives: the official SAP
+documentation on [help.sap.com](https://help.sap.com) and the practitioner knowledge
+on [community.sap.com](https://community.sap.com).
+
+[![CI](https://github.com/aamelin1/sap-help-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/aamelin1/sap-help-mcp/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/sap-help-mcp.svg)](https://pypi.org/project/sap-help-mcp/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
+---
+
+## Why
+
+Ask a general-purpose model how to configure foreign currency valuation, or what
+message `F5 702` means, and you get an answer assembled from memory: plausible, often
+subtly wrong, and impossible to verify. SAP documentation is huge, versioned per
+release, and mostly invisible to ordinary web search.
+
+With this server connected, the assistant searches the portal first and answers from
+the page it just read — with a link you can open.
+
+> **You:** How do I set up a substitution for the profit center in FI documents in ECC?
+>
+> **Assistant:** *(calls `help_search`, then `help_read`)* According to
+> *Substitution in Accounting Documents* (SAP_ERP 6.18) the callup point is 0002 …
+> — https://help.sap.com/docs/SAP_ERP/…
+
+It also reaches the **Support Content** space — the FAQs and troubleshooting guides
+written by SAP support, the ones that normally sit behind a search box nobody knows
+about — and the forum, for the "has anyone actually hit this" half of the job.
+
+## What it gives the assistant
+
+| Tool | What it does |
+|---|---|
+| `help_search(query, product?, version?, limit)` | Search help.sap.com: all SAP product documentation plus the Support Content wiki. |
+| `help_read(ref, part?)` | Fetch a full help.sap.com page as markdown, paginated for long pages. |
+| `community_search(query, limit, min_kudos)` | Search SAP Community blogs, Q&A and discussions, ranked on our side. |
+| `web_status()` | Version, source endpoints, cache state. Useful to confirm the connection works. |
+
+**No credentials, no local data, nothing written to disk.** The server only issues
+anonymous GET requests to public portal endpoints and caches responses in memory for
+six hours.
+
+**SAP Notes are not included.** Reading Notes requires a personal S-user, and this
+server deliberately holds no secrets. Use [mcp-sap-notes](https://github.com/marianfoo/mcp-sap-notes)
+alongside it — this server surfaces the Note numbers, that one opens them.
+
+---
+
+## Install
+
+Pick one. Option A is the least work; option B also covers Claude Code and other MCP
+clients.
+
+### Option A — one-click bundle (Claude Desktop, Windows and macOS)
+
+1. Download `sap-help-mcp.mcpb` from the
+   [latest release](https://github.com/aamelin1/sap-help-mcp/releases/latest).
+2. In Claude Desktop: **Settings → Extensions → Install Extension…** and select the
+   file (or just drag it onto that page).
+3. Confirm the install prompt. Done.
+
+**You do not need Python.** The bundle uses the MCPB `uv` runtime — Claude Desktop
+downloads a private Python and the dependencies itself, per bundle, and removes them
+on uninstall.
+
+### Option B — `uvx` (Claude Desktop, Claude Code, Cursor, anything MCP)
+
+Install [uv](https://docs.astral.sh/uv/) once — it is a single self-contained binary:
+
+```powershell
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Claude Code** — one command, nothing to edit:
+
+```bash
+claude mcp add sap-help -- uvx sap-help-mcp
+```
+
+**Claude Desktop** — add this block to the `mcpServers` section of your config file
+(keep any servers already listed there):
+
+```json
+{
+  "mcpServers": {
+    "sap-help": {
+      "command": "uvx",
+      "args": ["sap-help-mcp"]
+    }
+  }
+}
+```
+
+| | Config file |
+|---|---|
+| **Windows** | `%APPDATA%\Claude\claude_desktop_config.json` |
+| **macOS** | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+
+Then quit Claude Desktop completely (**Cmd+Q** on macOS, **File → Exit** on Windows —
+closing the window is not enough) and start it again. `uvx` installs the package on
+first launch, which takes a few seconds once.
+
+### Option C — from source (for development)
+
+```bash
+git clone https://github.com/aamelin1/sap-help-mcp.git
+cd sap-help-mcp
+uv sync --extra dev
+uv run pytest                       # offline tests
+uv run python -m sap_help_mcp.probe # live check against both portals
+```
+
+Point a client at the checkout with
+`"command": "uv", "args": ["run", "--directory", "/abs/path/to/sap-help-mcp", "sap-help-mcp"]`.
+
+---
+
+## Check that it works
+
+Ask the assistant: **"call web_status"**. You should get the server version and the
+portal endpoints back. Then try a real question, e.g. *"search SAP help for document
+splitting in new general ledger"*.
+
+## Getting good answers out of it
+
+* **Queries go to the portals in English** — both sources are English-only. Ask your
+  own question in any language; the assistant is instructed to translate it into SAP
+  terminology itself (*«переоценка валюты»* → *foreign currency valuation*).
+* **Filter by product line when you know it.** `SAP_ERP` is ECC 6.0,
+  `SAP_S4HANA_ON_PREMISE` and `SAP_S4HANA_CLOUD` are what they say, and
+  `SUPPORT_CONTENT` is the support Expert Content wiki. Without a filter the portal
+  happily returns ByDesign pages.
+* **Rephrase once or twice if the results are thin.** It helps more than anything
+  else, and the assistant is told to do it.
+* **The forum is the forum.** `community_search` returns field experience, not truth.
+  Each result carries a `match_score` and a kudos count so quality is visible.
+
+---
+
+## Self-hosting over HTTP (optional)
+
+For a shared deployment, run it as an HTTP service instead of stdio:
+
+```bash
+export MCP_TOKEN=$(openssl rand -hex 32)
+echo "give this to your clients: $MCP_TOKEN"
+MCP_TRANSPORT=http MCP_HOST=127.0.0.1 uvx sap-help-mcp
+```
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `MCP_TRANSPORT` | `stdio` | `stdio` or `http` |
+| `MCP_HOST` / `MCP_PORT` | `127.0.0.1` / `8010` | Listen address |
+| `MCP_TOKEN` | — | Bearer token. Required unless the listener is on loopback: the server refuses to start on any other address without one. |
+
+Every request must carry `Authorization: Bearer <token>` (compared with
+`hmac.compare_digest`); `GET /health` stays open for monitoring. Put it behind a
+TLS-terminating reverse proxy — the server speaks plain HTTP and binds to localhost by
+default.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| Server does not appear in Claude Desktop | The config was edited but the app was not fully restarted. Quit it entirely and reopen. |
+| `spawn uvx ENOENT` | `uvx` is not on the PATH the app inherits. Restart the machine after installing uv, or put the absolute path in `command` (`%USERPROFILE%\.local\bin\uvx.exe`, `~/.local/bin/uvx`). |
+| Tools return `"Network unreachable or timed out"` | A corporate proxy or firewall is blocking the portals. Check that `help.sap.com` opens in a browser on the same machine. |
+| Tools return `SAP responded 4xx` | The portal probably changed its undocumented endpoints. Run `uv run python -m sap_help_mcp.probe --raw` and open an issue with the output. |
+| Search finds nothing sensible | Use the exact English SAP term, a transaction code or a message number; drop the `product` filter. |
+| Claude Desktop logs | macOS: `~/Library/Logs/Claude/mcp-server-sap-help.log` · Windows: `%APPDATA%\Claude\logs\` |
+
+## How it works
+
+Roughly 800 lines of Python in four layers: tool declarations, one module per source,
+and a single place where HTTP happens. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+covers the three-step page-read chain, the Khoros LiQL ranking problem and the
+reasoning behind each design decision.
+
+## Contributing
+
+Issues and pull requests are welcome. Run `uv run pytest` before submitting; if you
+touched any portal request shape, also run `uv run python -m sap_help_mcp.probe` and
+say in the PR that you did — those endpoints are undocumented and only live checks
+prove anything.
+
+## Legal
+
+SAP and other SAP product names are trademarks of SAP SE. This project is not
+affiliated with SAP. All content reachable through the server remains the property of
+SAP SE and the respective authors; the server stores and redistributes nothing. See
+[NOTICE](NOTICE) for third-party attribution, including
+[mcp-sap-docs](https://github.com/marianfoo/mcp-sap-docs), whose portal request shapes
+this project builds on.
+
+Licensed under the [Apache License 2.0](LICENSE).

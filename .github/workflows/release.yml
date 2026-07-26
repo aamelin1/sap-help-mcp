@@ -1,0 +1,99 @@
+name: Release
+
+# Tag a commit with vX.Y.Z and push the tag:
+#   git tag v1.0.0 && git push origin v1.0.0
+# This builds the wheel, publishes it to PyPI, packs the .mcpb bundle and
+# attaches it to a GitHub release.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build wheel, sdist and .mcpb
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: The tag must match the version in the tree
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, re, sys
+
+          root = pathlib.Path(".")
+          pyproject = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
+                                (root / "pyproject.toml").read_text()).group(1)
+          package = re.search(r'(?m)^__version__\s*=\s*"([^"]+)"',
+                              (root / "src/sap_help_mcp/__init__.py").read_text()).group(1)
+          manifest = json.loads((root / "manifest.json").read_text())["version"]
+          tag = os.environ["GITHUB_REF_NAME"]
+
+          print(f"tag={tag} pyproject={pyproject} package={package} manifest={manifest}")
+          if not pyproject == package == manifest:
+              sys.exit("Version mismatch between pyproject, package and manifest.")
+          if tag != f"v{pyproject}":
+              sys.exit(f"Tag {tag} does not match version {pyproject}.")
+          PY
+
+      - name: Tests must pass before anything is published
+        run: uv run --extra dev pytest
+
+      - name: Build the Python distributions
+        run: uv build
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Pack the MCPB bundle
+        run: npx --yes @anthropic-ai/mcpb pack . sap-help-mcp.mcpb
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: |
+            dist/*
+            sap-help-mcp.mcpb
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Configure a PyPI "trusted publisher" for this repository and workflow;
+    # no API token is stored anywhere.
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: artifacts
+      - name: Keep only the Python distributions
+        run: mkdir -p dist && cp artifacts/dist/* dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: Attach the bundle to a GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/sap-help-mcp.mcpb
+            artifacts/dist/*

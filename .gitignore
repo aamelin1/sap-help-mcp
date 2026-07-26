@@ -1,0 +1,13 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.DS_Store
+*.mcpb
+
+# uv.lock is committed on purpose: it pins the dependency tree for the .mcpb
+# bundle and for source installs, so an upstream release cannot break users.
