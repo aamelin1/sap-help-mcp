@@ -19,10 +19,10 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.10", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v8
         with:
           enable-cache: true
 
@@ -36,7 +36,7 @@ jobs:
     name: version numbers agree
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Compare pyproject.toml, __init__.py and manifest.json
         run: |
           python - <<'PY'
@@ -58,11 +58,23 @@ jobs:
     name: .mcpb bundle packs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
       - name: Pack the bundle
         run: npx --yes @anthropic-ai/mcpb pack . sap-help-mcp.mcpb
       - name: Show what ended up inside
         run: unzip -l sap-help-mcp.mcpb
+      - name: Nothing pre-installed may be shipped
+        run: |
+          if unzip -l sap-help-mcp.mcpb | grep -E "(^|/)(\.venv|server/lib|server/venv)/"; then
+            echo "::error::The bundle ships pre-installed packages; the uv runtime forbids that."
+            exit 1
+          fi
+          for required in manifest.json pyproject.toml uv.lock README.md LICENSE NOTICE \
+                          src/sap_help_mcp/__main__.py; do
+            unzip -l sap-help-mcp.mcpb | grep -q " $required$" \
+              || { echo "::error::$required is missing from the bundle"; exit 1; }
+          done
+          echo "Bundle contents look right."

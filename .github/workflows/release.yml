@@ -17,10 +17,10 @@ jobs:
     name: Build wheel, sdist and .mcpb
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v8
 
       - name: The tag must match the version in the tree
         run: |
@@ -48,19 +48,29 @@ jobs:
       - name: Build the Python distributions
         run: uv build
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Pack the MCPB bundle
         run: npx --yes @anthropic-ai/mcpb pack . sap-help-mcp.mcpb
 
-      - uses: actions/upload-artifact@v4
+      # Two separate artifacts on purpose: the PyPI job must receive the wheel and
+      # sdist and nothing else, and neither job then has to guess how the artifact
+      # preserved its directory nesting.
+      - name: Upload the Python distributions
+        uses: actions/upload-artifact@v7
         with:
-          name: distributions
-          path: |
-            dist/*
-            sap-help-mcp.mcpb
+          name: python-dist
+          path: dist/
+          if-no-files-found: error
+
+      - name: Upload the MCPB bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: mcpb-bundle
+          path: sap-help-mcp.mcpb
+          if-no-files-found: error
 
   publish-pypi:
     name: Publish to PyPI
@@ -72,12 +82,11 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
-          name: distributions
-          path: artifacts
-      - name: Keep only the Python distributions
-        run: mkdir -p dist && cp artifacts/dist/* dist/
+          name: python-dist
+          path: dist
+      - run: ls -l dist
       - uses: pypa/gh-action-pypi-publish@release/v1
 
   github-release:
@@ -87,13 +96,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
-          name: distributions
-          path: artifacts
-      - uses: softprops/action-gh-release@v2
+          name: python-dist
+          path: dist
+      - uses: actions/download-artifact@v8
+        with:
+          name: mcpb-bundle
+          path: .
+      - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           files: |
-            artifacts/sap-help-mcp.mcpb
-            artifacts/dist/*
+            sap-help-mcp.mcpb
+            dist/*

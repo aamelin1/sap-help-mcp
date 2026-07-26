@@ -1,0 +1,26 @@
+version: 2
+
+# Keeps the workflows from silently rotting: Dependabot opens a PR whenever an
+# action publishes a new major, CI proves it still works, and the merge is one click.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps"
+    # Only fastmcp and markdownify are direct dependencies; transitive pins live in
+    # uv.lock and are refreshed along with them.
+    groups:
+      python:
+        patterns: ["*"]
