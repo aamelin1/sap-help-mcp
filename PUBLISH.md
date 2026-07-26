@@ -4,22 +4,58 @@ Everything in the repository is ready; these are the steps that need a human wit
 credentials. This file is for the maintainer and is not part of the product — delete
 it, or keep it, as you prefer.
 
-## 1. Create the GitHub repository
+## 1. Publish the repository
 
-Create an **empty** public repository at `github.com/aamelin1/sap-help-mcp` (no README,
-no license, no .gitignore — the tree already has them), then:
+The local repository is already initialised: branch `main`, two commits, clean working
+tree, **no remote configured on purpose** — GitHub Desktop creates the remote itself.
+
+### With GitHub Desktop (nothing to create on github.com first)
+
+1. **Sign in.** GitHub Desktop → *Settings → Accounts* → sign in as `aamelin1`.
+2. **Set the commit identity before anything else.** *Settings → Git*:
+   - Name: `Andrey Amelin`
+   - Email: `aamelin1@users.noreply.github.com`
+
+   Do not leave a work email here — every commit email is public forever in a public
+   repository. The two existing commits already use the noreply address.
+3. **Add the folder.** *File → Add local repository…* and select
+   `Documents/SAP KB MCPs/sap-help-mcp`.
+
+   Select that subfolder exactly, **not** the parent `SAP KB MCPs` — the parent holds
+   unrelated internal notes and the predecessor project.
+4. It should report *"No local changes"* and show the two commits under *History*.
+5. **Publish.** Click *Publish repository* in the top bar:
+   - Name: `sap-help-mcp`
+   - Description: `MCP server for searching SAP Help Portal and SAP Community`
+   - **Uncheck "Keep this code private"**
+   - Organization: *None*
+
+   Press *Publish repository*. GitHub Desktop creates the repository on GitHub, sets
+   up the remote over HTTPS with your existing credentials, and pushes `main`.
+
+### Then, on github.com
+
+6. Open the new repository → gear icon next to *About* → add the same description and
+   these topics: `mcp`, `model-context-protocol`, `sap`, `s4hana`, `abap`, `claude`.
+   Topics are how people actually find MCP servers.
+7. Open the *Actions* tab. The CI workflow runs on the first push; wait for it to go
+   green (six jobs: three operating systems × two Python versions, plus the version
+   and bundle checks).
+8. Optional but recommended: *Your profile → Settings → Emails* → tick **"Keep my
+   email addresses private"**. That makes GitHub reject any future push carrying a
+   real email address, so the safeguard in step 2 cannot be undone by accident.
+
+### If you prefer the command line
 
 ```bash
-cd sap-help-mcp
-git remote add origin git@github.com:aamelin1/sap-help-mcp.git
+cd "sap-help-mcp"
+git remote add origin https://github.com/aamelin1/sap-help-mcp.git
 git push -u origin main
 ```
 
-The history is a single commit and contains no personal paths or internal references.
-
-After the first push, in **Settings → General**: add the description and topics
-(`mcp`, `sap`, `s4hana`, `abap`, `claude`, `model-context-protocol`) — topics are how
-people find MCP servers on GitHub.
+This variant needs the empty repository to exist on github.com first: *New
+repository* → name `sap-help-mcp` → Public → **add no README, no .gitignore and no
+license**, since the tree already contains all three.
 
 ## 2. Claim the name on PyPI and set up trusted publishing
 
