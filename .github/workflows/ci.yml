@@ -21,8 +21,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Pinned to an exact version on purpose: unlike the other actions used here,
+      # setup-uv publishes no floating major tag for the v8 line, so @v8 does not
+      # resolve. Dependabot keeps this pin current.
       - name: Install uv
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           enable-cache: true
 
