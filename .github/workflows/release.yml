@@ -17,7 +17,7 @@ jobs:
     name: Build wheel, sdist and .mcpb
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8
@@ -48,7 +48,7 @@ jobs:
       - name: Build the Python distributions
         run: uv build
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
 
