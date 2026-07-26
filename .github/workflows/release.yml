@@ -17,11 +17,11 @@ jobs:
     name: Build wheel, sdist and .mcpb
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Exact pin: setup-uv publishes no floating major tag for the v8 line.
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v9.0.0
 
       - name: The tag must match the version in the tree
         run: |
@@ -49,7 +49,7 @@ jobs:
       - name: Build the Python distributions
         run: uv build
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
 
@@ -105,7 +105,7 @@ jobs:
         with:
           name: mcpb-bundle
           path: .
-      - uses: softprops/action-gh-release@v3.0.0
+      - uses: softprops/action-gh-release@v3.0.2
         with:
           generate_release_notes: true
           files: |
