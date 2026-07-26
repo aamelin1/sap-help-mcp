@@ -19,13 +19,13 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.10", "3.13"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Pinned to an exact version on purpose: unlike the other actions used here,
       # setup-uv publishes no floating major tag for the v8 line, so @v8 does not
       # resolve. Dependabot keeps this pin current.
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
 
@@ -39,7 +39,7 @@ jobs:
     name: version numbers agree
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Compare pyproject.toml, __init__.py and manifest.json
         run: |
           python - <<'PY'
@@ -61,8 +61,8 @@ jobs:
     name: .mcpb bundle packs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
       - name: Pack the bundle
