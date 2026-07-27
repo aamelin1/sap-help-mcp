@@ -25,7 +25,7 @@ the page it just read — with a link you can open.
 >
 > **Assistant:** *(calls `help_search`, then `help_read`)* According to
 > *Substitution in Accounting Documents* (SAP_ERP 6.18) the callup point is 0002 …
-> — https://help.sap.com/docs/SAP_ERP/…
+> — https://help.sap.com/docs/SAP_ERP/49fc4b036bc14cceb9bcf1a45e472f20/0eacc2531bb9b44ce10000000a174cb4.html?version=6.18.latest
 
 It also reaches the **Support Content** space — the FAQs and troubleshooting guides
 written by SAP support, the ones that normally sit behind a search box nobody knows
@@ -52,10 +52,6 @@ alongside it — this server surfaces the Note numbers, that one opens them.
 
 ## Install
 
-Pick one. **A** is the least work, **B** also covers Claude Code and every other MCP
-client, **C** is for machines that cannot reach PyPI, and **D** is for working on the
-server itself.
-
 ### Option A — one-click bundle (Claude Desktop, Windows and macOS)
 
 1. **[Download sap-help-mcp.mcpb](https://github.com/aamelin1/sap-help-mcp/releases/latest/download/sap-help-mcp.mcpb)**
@@ -74,14 +70,6 @@ on uninstall.
 Updating is manual: installing from a file gives Claude Desktop no update source, so a
 new release means downloading the next `.mcpb` and installing it again. Option B
 updates itself.
-
-The filename carries no version on purpose — that is what keeps the download link
-above permanent. The version is on the extension card in Claude Desktop after
-installing, from `web_status` at runtime, and in the file itself before installing:
-
-```bash
-unzip -p ~/Downloads/sap-help-mcp.mcpb manifest.json | grep '"version"'
-```
 
 ### Option B — `uvx` (Claude Desktop, Claude Code, Cursor, anything MCP)
 
@@ -178,7 +166,7 @@ Point a client at the checkout with
 
 ## Check that it works
 
-Ask the assistant: **"call web_status"**. You should get the server version and the
+Ask the AI assistant: **"call SAP-HELP web_status"**. You should get the server version and the
 portal endpoints back. Then try a real question, e.g. *"search SAP help for document
 splitting in new general ledger"*.
 
