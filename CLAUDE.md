@@ -30,6 +30,9 @@ uv run sap-help-mcp                      # run over stdio, as a client would
 ## Release
 
 Bump `version` in `pyproject.toml`, `__version__` in `src/sap_help_mcp/__init__.py`
-and `version` in `manifest.json` together — CI checks that the three agree. Then tag
-`vX.Y.Z` and push the tag; the release workflow publishes to PyPI and attaches the
-`.mcpb` bundle to the GitHub release.
+and `version` in `manifest.json` together — CI checks that the three agree — and add
+a `## [X.Y.Z]` section to `CHANGELOG.md`, which becomes the release notes and is
+required. Then tag `vX.Y.Z` and push the tag; the release workflow verifies the tag
+matches the version, publishes to PyPI and attaches the `.mcpb` bundle to the GitHub
+release. Everything that can invalidate a release is checked before the PyPI upload,
+because that step is the only irreversible one.

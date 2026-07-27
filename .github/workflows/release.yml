@@ -42,6 +42,12 @@ jobs:
               sys.exit("Version mismatch between pyproject, package and manifest.")
           if tag != f"v{pyproject}":
               sys.exit(f"Tag {tag} does not match version {pyproject}.")
+
+          # Checked here rather than in the release job so a missing entry stops the
+          # run before anything reaches PyPI, which cannot be undone.
+          changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+          if not re.search(rf"(?m)^## \[{re.escape(pyproject)}\]", changelog):
+              sys.exit(f"CHANGELOG.md has no '## [{pyproject}]' section.")
           PY
 
       - name: Tests must pass before anything is published
@@ -98,6 +104,28 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Checkout first: it cleans the working directory, which would delete the
+      # artifacts if they were downloaded before it.
+      - uses: actions/checkout@v7
+
+      # Without this the release body is whatever GitHub can infer from merged pull
+      # requests, so a fix pushed straight to main shows up as "no changes".
+      - name: Take the release notes from the changelog
+        run: |
+          python - <<'PY'
+          import os, pathlib, re, sys
+
+          version = os.environ["GITHUB_REF_NAME"].lstrip("v")
+          text = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          section = re.search(
+              rf"(?ms)^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[|\Z)", text)
+          if not section:
+              sys.exit(f"CHANGELOG.md has no section for {version}.")
+          body = section.group(1).strip()
+          pathlib.Path("release_body.md").write_text(body + "\n", encoding="utf-8")
+          print(body)
+          PY
+
       - uses: actions/download-artifact@v8
         with:
           name: python-dist
@@ -106,8 +134,13 @@ jobs:
         with:
           name: mcpb-bundle
           path: .
+
+      # body_path plus generate_release_notes: the action documents the body as
+      # pre-pended to the generated notes, so the changelog leads and the commit and
+      # pull-request summary follows it.
       - uses: softprops/action-gh-release@v3.0.2
         with:
+          body_path: release_body.md
           generate_release_notes: true
           files: |
             sap-help-mcp.mcpb
