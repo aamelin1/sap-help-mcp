@@ -52,8 +52,9 @@ alongside it — this server surfaces the Note numbers, that one opens them.
 
 ## Install
 
-Pick one. Option A is the least work; option B also covers Claude Code and other MCP
-clients.
+Pick one. **A** is the least work, **B** also covers Claude Code and every other MCP
+client, **C** is for machines that cannot reach PyPI, and **D** is for working on the
+server itself.
 
 ### Option A — one-click bundle (Claude Desktop, Windows and macOS)
 
@@ -110,7 +111,42 @@ Then quit Claude Desktop completely (**Cmd+Q** on macOS, **File → Exit** on Wi
 closing the window is not enough) and start it again. `uvx` installs the package on
 first launch, which takes a few seconds once.
 
-### Option C — from source (for development)
+### Option C — from a downloaded bundle (restricted networks)
+
+The `.mcpb` is a plain zip: the same server, plus a `manifest.json` telling the host
+how to start it. If PyPI is unreachable but GitHub is not, unpack it and point a client
+at the unpacked copy — this is what Claude Desktop does internally in option A.
+
+```bash
+mkdir -p ~/mcp/sap-help && cd ~/mcp/sap-help
+unzip ~/Downloads/sap-help-mcp.mcpb
+
+# Claude Code (use an absolute path — the entry is stored verbatim)
+claude mcp add sap-help -- \
+  uv run --directory ~/mcp/sap-help src/sap_help_mcp/__main__.py
+```
+
+For Claude Desktop, the equivalent config entry is:
+
+```json
+{
+  "mcpServers": {
+    "sap-help": {
+      "command": "uv",
+      "args": ["run", "--directory",
+               "/absolute/path/to/mcp/sap-help",
+               "src/sap_help_mcp/__main__.py"]
+    }
+  }
+}
+```
+
+Two caveats. This does not make the server work offline: `uv` still resolves
+`fastmcp` and `markdownify`, so a package index — or a mirror of one — has to be
+reachable. And there is no update path: a new release means downloading the next
+`.mcpb` and unpacking it again. Prefer option B wherever PyPI is available.
+
+### Option D — from source (for development)
 
 ```bash
 git clone https://github.com/aamelin1/sap-help-mcp.git
