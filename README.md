@@ -183,27 +183,6 @@ splitting in new general ledger"*.
 
 ---
 
-## Self-hosting over HTTP (optional)
-
-For a shared deployment, run it as an HTTP service instead of stdio:
-
-```bash
-export MCP_TOKEN=$(openssl rand -hex 32)
-echo "give this to your clients: $MCP_TOKEN"
-MCP_TRANSPORT=http MCP_HOST=127.0.0.1 uvx sap-help-mcp
-```
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `MCP_TRANSPORT` | `stdio` | `stdio` or `http` |
-| `MCP_HOST` / `MCP_PORT` | `127.0.0.1` / `8010` | Listen address |
-| `MCP_TOKEN` | — | Bearer token. Required unless the listener is on loopback: the server refuses to start on any other address without one. |
-
-Every request must carry `Authorization: Bearer <token>` (compared with
-`hmac.compare_digest`); `GET /health` stays open for monitoring. Put it behind a
-TLS-terminating reverse proxy — the server speaks plain HTTP and binds to localhost by
-default.
-
 ## Troubleshooting
 
 | Symptom | Cause and fix |
