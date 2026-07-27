@@ -11,6 +11,19 @@ on [community.sap.com](https://community.sap.com).
 
 ---
 
+## Quick start
+
+**Claude Desktop** — [download the extension](https://github.com/aamelin1/sap-help-mcp/releases/latest/download/sap-help-mcp.mcpb),
+then open **Settings → Extensions → Advanced settings**, click **Install Extension**
+and pick the downloaded file.
+
+**Claude Code** — `claude mcp add sap-help -- uvx sap-help-mcp`
+
+That is all. [Install](#install) below covers the other clients, and
+[Troubleshooting](#troubleshooting) covers what to do if a step misbehaves.
+
+---
+
 ## Why
 
 Ask a general-purpose model how to configure foreign currency valuation, or what
