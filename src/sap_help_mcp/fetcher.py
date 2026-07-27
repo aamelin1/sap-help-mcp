@@ -9,7 +9,9 @@ asking the same question twice inside one conversation is completely normal.
 
 from __future__ import annotations
 
+import html as html_mod
 import json
+import re
 import threading
 import time
 import urllib.error
@@ -87,29 +89,68 @@ def get_json(url: str, *, referer: str | None = None,
     return data, None
 
 
-_SCRIPT_STYLE_RE = None
+_SCRIPT_STYLE_RE = re.compile(r"<(script|style)\b[^>]*>.*?</\1>", re.S | re.I)
+
+# The portal emits leftovers of its DITA toolchain as XML processing instructions,
+# e.g. <?sap-ot O2O class="- topic/xref " href="0444….xml"
+#      text="Foreign currency balance sheet accounts" … xtrf="file:/home/builder/…" >
+# Note it closes with a plain ">", not "?>". html.parser surfaces the whole thing as
+# text, so markdownify faithfully prints the attributes — including build paths from
+# SAP's build machine. The visible link label lives ONLY in the text= attribute, so
+# these must be collapsed to that text rather than dropped: deleting one turns
+# "Foreign currency balance sheet accounts, that is, the G/L accounts you manage…"
+# into ", that is, the G/L accounts you manage…".
+# The trailing \s* is deliberate: the portal puts a newline straight after the
+# instruction, and markdownify turns that into a line break, splitting the sentence
+# between the label and the comma that continues it.
+_PROCESSING_INSTRUCTION_RE = re.compile(r"<\?[^>]*>\s*", re.S)
+_PI_TEXT_RE = re.compile(r'\btext="([^"]*)"')
+_NO_SPACE_BEFORE = ",.;:!?)]}"
+
+# Customizing paths are rendered as label/gif/label/gif/…; navstep is the separator,
+# navstart and navend only bracket the path. Left alone they bury the path itself in
+# image markup, and the path is the whole point of the page.
+_NAV_IMG_RE = re.compile(r'<img\b[^>]*?\bnav(start|step|end)\.gif\b[^>]*>', re.I)
+_NAV_REPLACEMENT = {"step": " → ", "start": "", "end": ""}
+
+
+def _strip_portal_artifacts(html: str) -> str:
+    """Remove markup that carries no meaning for a reader of the page text.
+
+    Everything here was observed live on help.sap.com; see the fixture in the tests.
+    """
+    html = _SCRIPT_STYLE_RE.sub(" ", html)
+    html = _NAV_IMG_RE.sub(lambda m: _NAV_REPLACEMENT[m.group(1).lower()], html)
+
+    def pi_to_label(match: re.Match) -> str:
+        found = _PI_TEXT_RE.search(match.group(0))
+        if not found:
+            return " "
+        label = html_mod.unescape(found.group(1))
+        # The whitespace the instruction was followed by has been consumed, so put a
+        # space back unless the next character is punctuation that must not be
+        # preceded by one.
+        nxt = match.string[match.end():match.end() + 1]
+        if nxt and nxt not in _NO_SPACE_BEFORE:
+            label += " "
+        return label
+
+    return _PROCESSING_INSTRUCTION_RE.sub(pi_to_label, html)
 
 
 def html_to_markdown(html: str) -> str:
     """HTML fragment -> markdown. markdownify is optional: without it, a crude fallback.
 
-    Scripts and styles are cut out here, before conversion, on purpose: markdownify's
-    strip= drops the tags but keeps their text content, which would otherwise dump raw
-    JavaScript and CSS into the middle of the page text.
+    Scripts, styles and portal artifacts are cut out before conversion on purpose:
+    markdownify's strip= removes the tags but keeps their text content, so raw
+    JavaScript, CSS and DITA leftovers would otherwise land in the middle of the page.
     """
-    global _SCRIPT_STYLE_RE
-    if _SCRIPT_STYLE_RE is None:
-        import re as _re
-        _SCRIPT_STYLE_RE = _re.compile(r"<(script|style)\b[^>]*>.*?</\1>",
-                                       _re.S | _re.I)
-    html = _SCRIPT_STYLE_RE.sub(" ", html)
+    html = _strip_portal_artifacts(html)
 
     try:
         from markdownify import markdownify
         return markdownify(html, heading_style="ATX", strip=["script", "style"]).strip()
     except Exception:
-        import html as html_mod
-        import re
         text = re.sub(r"<br\s*/?>|</p>|</div>|</tr>", "\n", html, flags=re.I)
         text = re.sub(r"<[^>]+>", " ", text)
         text = html_mod.unescape(text)

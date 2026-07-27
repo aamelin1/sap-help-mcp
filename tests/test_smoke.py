@@ -160,6 +160,60 @@ def test_scripts_and_styles_never_reach_the_markdown():
     assert "alert" not in md and "color:red" not in md
 
 
+# Taken from help.sap.com, page 8450d7531a4d424de10000000a174cb4 (SAP_ERP
+# 6.18.latest), captured 2026-07-26; only the xtrf path is abridged. Two portal
+# artifacts in one fragment: a DITA processing instruction, and a customizing path
+# built out of gifs.
+#
+# The newline after the instruction matters and must not be tidied away — it is what
+# markdownify turns into a line break, splitting "Foreign currency balance sheet
+# accounts" from the ", that is, …" that continues the sentence.
+REAL_PAGE_FRAGMENT = (
+    '<ul class="ul"><li class="li"><p class="p"> '
+    '<?sap-ot O2O class="- topic/xref " href="0444d7531a4d424de10000000a174cb4.xml"'
+    ' text="Foreign currency balance sheet accounts" desc="" xtrc="xref:1"'
+    ' xtrf="file:/home/builder/src/dita-all/kid1718795600684/loio17ec785ed229_en-US/'
+    'src/content/localization/en-us/8450d7531a4d424de10000000a174cb4.xml"'
+    ' output-class="xref" outputTopicFile="file:/home/builder/tp.net.sf.dita-ot/2.3/'
+    'plugins/org.dita.html5/xsl/map2html5Content.xsl" >'
+    '\n, that is, the G/L accounts that you manage in foreign currency.</p></li></ul>'
+    '<p class="p"><span class="ph menucascade">'
+    '<img src="themes/sap-light/img/navstart.gif" alt="Start of the navigation path" '
+    'title="Start of the navigation path">'
+    '<span class="ph uicontrol">Financial Accounting (New)</span>&nbsp;'
+    '<img src="themes/sap-light/img/navstep.gif" alt="Next navigation step" '
+    'title="Next navigation step">&nbsp;'
+    '<span class="ph uicontrol">Periodic Processing</span>&nbsp;'
+    '<img src="themes/sap-light/img/navend.gif" alt="End of the navigation path" '
+    'title="End of the navigation path"></span></p>'
+)
+
+
+def test_dita_processing_instruction_collapses_to_its_label():
+    """The visible link text lives only in the PI's text= attribute, so dropping the
+    instruction would silently delete the subject of the sentence."""
+    from sap_help_mcp.fetcher import html_to_markdown
+
+    md = html_to_markdown(REAL_PAGE_FRAGMENT)
+    assert "Foreign currency balance sheet accounts, that is, the G/L accounts" in md
+
+
+def test_no_portal_plumbing_survives_into_the_markdown():
+    from sap_help_mcp.fetcher import html_to_markdown
+
+    md = html_to_markdown(REAL_PAGE_FRAGMENT)
+    for leak in ("sap-ot", "/home/builder", "map2html5Content", "outputTopicFile",
+                 "xtrf", "navstep.gif", "navstart.gif", "navend.gif", "themes/"):
+        assert leak not in md, f"{leak!r} leaked into the page text"
+
+
+def test_customizing_path_reads_as_a_path():
+    from sap_help_mcp.fetcher import html_to_markdown
+
+    md = html_to_markdown(REAL_PAGE_FRAGMENT)
+    assert "Financial Accounting (New) → Periodic Processing" in " ".join(md.split())
+
+
 def test_ref_query_parsing_survives_a_fragment():
     ref = ("https://help.sap.com/docs/SAP_ERP/17ec785ed229/8450d7531a4d.html"
            "?locale=en-US&version=6.18.latest#section-2")
