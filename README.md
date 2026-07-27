@@ -58,8 +58,8 @@ server itself.
 
 ### Option A — one-click bundle (Claude Desktop, Windows and macOS)
 
-1. Download `sap-help-mcp.mcpb` from the
-   [latest release](https://github.com/aamelin1/sap-help-mcp/releases/latest).
+1. **[Download sap-help-mcp.mcpb](https://github.com/aamelin1/sap-help-mcp/releases/latest/download/sap-help-mcp.mcpb)**
+   — that link always serves the newest release, so it is the one to pass around.
 2. In Claude Desktop, open **Settings → Extensions → Advanced settings**, click
    **Install Extension** and pick the downloaded `.mcpb` file.
 3. The install dialog warns that the extension is not verified by Anthropic and will
@@ -74,6 +74,14 @@ on uninstall.
 Updating is manual: installing from a file gives Claude Desktop no update source, so a
 new release means downloading the next `.mcpb` and installing it again. Option B
 updates itself.
+
+The filename carries no version on purpose — that is what keeps the download link
+above permanent. The version is on the extension card in Claude Desktop after
+installing, from `web_status` at runtime, and in the file itself before installing:
+
+```bash
+unzip -p ~/Downloads/sap-help-mcp.mcpb manifest.json | grep '"version"'
+```
 
 ### Option B — `uvx` (Claude Desktop, Claude Code, Cursor, anything MCP)
 
