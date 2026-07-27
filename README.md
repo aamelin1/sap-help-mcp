@@ -60,13 +60,20 @@ server itself.
 
 1. Download `sap-help-mcp.mcpb` from the
    [latest release](https://github.com/aamelin1/sap-help-mcp/releases/latest).
-2. In Claude Desktop: **Settings → Extensions → Install Extension…** and select the
-   file (or just drag it onto that page).
-3. Confirm the install prompt. Done.
+2. In Claude Desktop, open **Settings → Extensions → Advanced settings**, click
+   **Install Extension** and pick the downloaded `.mcpb` file.
+3. The install dialog warns that the extension is not verified by Anthropic and will
+   have access to your computer. That is expected for any bundle installed from a file
+   rather than from Anthropic's directory — decide whether you trust this repository,
+   then confirm.
 
 **You do not need Python.** The bundle uses the MCPB `uv` runtime — Claude Desktop
 downloads a private Python and the dependencies itself, per bundle, and removes them
 on uninstall.
+
+Updating is manual: installing from a file gives Claude Desktop no update source, so a
+new release means downloading the next `.mcpb` and installing it again. Option B
+updates itself.
 
 ### Option B — `uvx` (Claude Desktop, Claude Code, Cursor, anything MCP)
 
