@@ -89,7 +89,8 @@ The `Release` workflow then:
    release with generated notes.
 
 Once that release exists, both install paths in the README work verbatim: the `.mcpb`
-download link points at `releases/latest`, and `uvx sap-help-mcp` resolves from PyPI.
+download link points at `releases/latest`, and `uvx sap-help-mcp@latest` resolves from
+PyPI.
 
 ## 4. Smoke-test the way a colleague would
 

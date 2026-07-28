@@ -17,7 +17,7 @@ on [community.sap.com](https://community.sap.com).
 then open **Settings → Extensions → Advanced settings**, click **Install Extension**
 and pick the downloaded file.
 
-**Claude Code** — `claude mcp add sap-help -- uvx sap-help-mcp`
+**Claude Code** — `claude mcp add sap-help -- uvx sap-help-mcp@latest`
 
 That is all. [Install](#install) below covers the other clients, and
 [Troubleshooting](#troubleshooting) covers what to do if a step misbehaves.
@@ -81,8 +81,7 @@ downloads a private Python and the dependencies itself, per bundle, and removes 
 on uninstall.
 
 Updating is manual: installing from a file gives Claude Desktop no update source, so a
-new release means downloading the next `.mcpb` and installing it again. Option B
-updates itself.
+new release means downloading the next `.mcpb` and installing it again.
 
 ### Option B — `uvx` (Claude Desktop, Claude Code, Cursor, anything MCP)
 
@@ -101,7 +100,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 **Claude Code** — one command, nothing to edit:
 
 ```bash
-claude mcp add sap-help -- uvx sap-help-mcp
+claude mcp add sap-help -- uvx sap-help-mcp@latest
 ```
 
 **Claude Desktop** — add this block to the `mcpServers` section of your config file
@@ -112,7 +111,7 @@ claude mcp add sap-help -- uvx sap-help-mcp
   "mcpServers": {
     "sap-help": {
       "command": "uvx",
-      "args": ["sap-help-mcp"]
+      "args": ["sap-help-mcp@latest"]
     }
   }
 }
@@ -126,6 +125,15 @@ claude mcp add sap-help -- uvx sap-help-mcp
 Then quit Claude Desktop completely (**Cmd+Q** on macOS, **File → Exit** on Windows —
 closing the window is not enough) and start it again. `uvx` installs the package on
 first launch, which takes a few seconds once.
+
+The `@latest` suffix is what keeps you current, and it is worth understanding why.
+Plain `uvx sap-help-mcp` resolves the newest version on its *first* run and then reuses
+its cached environment indefinitely — a new release is not picked up until the cache is
+refreshed, so you would sit on whatever version you first installed. `@latest` asks for
+the newest version and refreshes the cache, at the cost of one index lookup per server
+start.
+
+Pin instead if you would rather decide when to move: `"args": ["sap-help-mcp==1.0.1"]`.
 
 ### Option C — from a downloaded bundle (restricted networks)
 
