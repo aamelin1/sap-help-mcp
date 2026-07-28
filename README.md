@@ -119,8 +119,12 @@ claude mcp add sap-help -- uvx sap-help-mcp@latest
 
 | | Config file |
 |---|---|
-| **Windows** | `%APPDATA%\Claude\claude_desktop_config.json` |
+| **Windows** (installer) | `%APPDATA%\Claude\claude_desktop_config.json` |
+| **Windows** (Microsoft Store) | `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json` |
 | **macOS** | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+
+If you are unsure which you have, the reliable way is to let the app tell you: open
+**Settings → Developer → Edit Config**, which opens the file that is actually in use.
 
 Then quit Claude Desktop completely (**Cmd+Q** on macOS, **File → Exit** on Windows —
 closing the window is not enough) and start it again. `uvx` installs the package on
@@ -212,6 +216,7 @@ splitting in new general ledger"*.
 | Symptom | Cause and fix |
 |---|---|
 | Server does not appear in Claude Desktop | The config was edited but the app was not fully restarted. Quit it entirely and reopen. |
+| Extension fails to install on Windows, mentioning `cryptography`, Rust, or a missing `link.exe` | A 32-bit Python was picked up. `cryptography` — a transitive dependency of every MCP server SDK — ships no 32-bit Windows wheel, so it gets compiled from source and needs the MSVC linker. Version 1.0.2 and later ask uv for a 64-bit interpreter of its own; on earlier versions, use option B instead. Installing Visual Studio Build Tools also works, but it is several gigabytes for nothing. |
 | `spawn uvx ENOENT` | `uvx` is not on the PATH the app inherits. Restart the machine after installing uv, or put the absolute path in `command` (`%USERPROFILE%\.local\bin\uvx.exe`, `~/.local/bin/uvx`). |
 | Tools return `"Network unreachable or timed out"` | A corporate proxy or firewall is blocking the portals. Check that `help.sap.com` opens in a browser on the same machine. |
 | Tools return `SAP responded 4xx` | The portal probably changed its undocumented endpoints. Run `uv run python -m sap_help_mcp.probe --raw` and open an issue with the output. |
