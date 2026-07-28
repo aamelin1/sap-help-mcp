@@ -15,9 +15,17 @@ All notable changes to this project are documented here. The format follows
   already-installed server, so the install still ran against the system's 32-bit
   CPython 3.11.
 
-  This release exists to be tested on a host that reproduces the failure; it is not
-  confirmed fixed. On a 64-bit machine the only visible change is that the bundle
-  downloads a managed CPython 3.13 on first use instead of borrowing a system one.
+  Confirmed on the reporting host: uv now resolves a 64-bit interpreter and no longer
+  attempts to compile `cryptography`. On a 64-bit machine the only visible change is
+  that the bundle downloads a managed CPython 3.13 on first use instead of borrowing a
+  system one.
+
+### Documented
+
+- Troubleshooting for `Missing expected target directory for Python minor version link`,
+  a uv bug on Windows ([astral-sh/uv#19622](https://github.com/astral-sh/uv/issues/19622))
+  that surfaces once uv starts managing its own interpreter: a dangling junction in its
+  Python store which uv cannot repair, and the two commands that clear it.
 
 ## [1.0.2] — 2026-07-27
 
