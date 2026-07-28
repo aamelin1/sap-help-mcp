@@ -47,6 +47,22 @@ Changelog = "https://github.com/aamelin1/sap-help-mcp/blob/main/CHANGELOG.md"
 [project.scripts]
 sap-help-mcp = "sap_help_mcp.server:main"
 
+[tool.uv]
+# Together with .python-version, this decides which interpreter uv uses when it
+# operates on this directory — which is what installing the .mcpb bundle does.
+#
+# Why it matters: a Windows host with a 32-bit CPython 3.11 installed had the bundle
+# built against it, and `cryptography` — dragged in by joserfc inside
+# fastmcp-slim[server], and unused by this server — publishes no 32-bit Windows wheel.
+# uv fell back to compiling its Rust extension and stopped for want of an MSVC linker.
+# uv's managed builds match the architecture of the operating system, so requiring one
+# removes the whole class of failure; .python-version keeps it on a version CI covers
+# rather than whatever is newest.
+#
+# Neither file affects `uvx sap-help-mcp@latest`: installs from PyPI use a wheel and
+# never read this project's configuration.
+python-preference = "only-managed"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

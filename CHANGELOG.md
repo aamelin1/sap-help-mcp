@@ -4,19 +4,27 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Second attempt at the Windows install failure below. The interpreter is now requested
+  through `.python-version` and `tool.uv.python-preference`, files uv reads when it
+  operates on the bundle directory — which is what the install step does. The 1.0.2
+  attempt put the flags in the manifest's `mcp_config`, which only governs launching an
+  already-installed server, so the install still ran against the system's 32-bit
+  CPython 3.11. Unverified against a 32-bit Windows host.
+
 ## [1.0.2] — 2026-07-27
 
 ### Fixed
 
-- The extension no longer fails to install on Windows machines that have a 32-bit
-  Python. The MCPB `uv` runtime could pick up a system interpreter, and `cryptography`
-  — a transitive dependency of every MCP server SDK, unused by this server — publishes
-  no 32-bit Windows wheel, so uv fell back to compiling its Rust extension and failed
-  for want of an MSVC linker. The bundle now starts with `--managed-python --python
-  3.13`, so uv uses an interpreter of its own, matching the architecture of the
-  operating system, at a version this project's CI actually tests. The trade-off is a
-  one-off interpreter download on first start, even where a suitable system Python
-  exists. Reported from the field; only the bundle is affected, `uvx` was already fine.
+- Attempted to fix an extension install failure on Windows machines that have a 32-bit
+  Python: `cryptography` — a transitive dependency of every MCP server SDK, unused by
+  this server — publishes no 32-bit Windows wheel, so uv compiled its Rust extension
+  and failed for want of an MSVC linker. **This attempt did not work**: the flags were
+  added to the manifest's `mcp_config`, which the install step does not consult. Use
+  option B on affected machines. Only the bundle is affected; `uvx` was always fine.
 
 ### Changed
 
