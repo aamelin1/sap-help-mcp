@@ -1,6 +1,6 @@
 [project]
 name = "sap-help-mcp"
-version = "1.0.2"
+version = "1.0.3"
 description = "MCP server that searches SAP Help Portal and SAP Community from your AI assistant"
 readme = "README.md"
 requires-python = ">=3.10"

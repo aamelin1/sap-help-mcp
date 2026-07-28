@@ -4,16 +4,20 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.3] — 2026-07-27
 
 ### Fixed
 
 - Second attempt at the Windows install failure below. The interpreter is now requested
-  through `.python-version` and `tool.uv.python-preference`, files uv reads when it
+  through `.python-version` and `tool.uv.python-preference`, files uv reads whenever it
   operates on the bundle directory — which is what the install step does. The 1.0.2
   attempt put the flags in the manifest's `mcp_config`, which only governs launching an
   already-installed server, so the install still ran against the system's 32-bit
-  CPython 3.11. Unverified against a 32-bit Windows host.
+  CPython 3.11.
+
+  This release exists to be tested on a host that reproduces the failure; it is not
+  confirmed fixed. On a 64-bit machine the only visible change is that the bundle
+  downloads a managed CPython 3.13 on first use instead of borrowing a system one.
 
 ## [1.0.2] — 2026-07-27
 
@@ -71,6 +75,7 @@ First public release.
   (`.mcpb`, server type `uv`) for one-click installation in Claude Desktop.
 - Offline test suite and `python -m sap_help_mcp.probe` for live source checks.
 
+[1.0.3]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.3
 [1.0.2]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.2
 [1.0.1]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.1
 [1.0.0]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.0
