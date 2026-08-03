@@ -27,7 +27,7 @@ def register(mcp) -> None:
     """Register every tool on the given FastMCP server."""
 
     @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
-    def help_search(
+    def sap_help_search(
         query: str = Field(description=(
             "Query IN ENGLISH against SAP documentation. Feature names, transaction "
             "codes, IMG paths, field names and message numbers all work.")),
@@ -50,24 +50,25 @@ def register(mcp) -> None:
         documentation and the Support Content space: the FAQs and troubleshooting
         guides written by SAP support.
 
-        Next step: help_read(ref) for the full page text. If the documentation is
-        silent on real-world practice, try community_search.
+        Next step: sap_help_read(ref) for the full page text. If the documentation is
+        silent on real-world practice, try sap_community_search.
         """
         return _safe(helpportal.search, query, product=product or "",
                      version=version or "", limit=limit)
 
     @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
-    def help_read(
+    def sap_help_read(
         ref: str = Field(description=(
-            "URL of a help.sap.com page, taken from the ref field of help_search results.")),
+            "URL of a help.sap.com page, taken from the ref field of a "
+            "sap_help_search result.")),
         part: int = Field(1, ge=1, description=(
             "Part number for long pages (see total_parts in the response).")),
     ) -> dict:
-        """Read a full help.sap.com page as markdown — use after help_search."""
+        """Read a full help.sap.com page as markdown — use after sap_help_search."""
         return _safe(helpportal.read, ref, part=part)
 
     @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
-    def community_search(
+    def sap_community_search(
         query: str = Field(description=(
             "Query IN ENGLISH. The forum matches literally: exact error text, a message "
             "number, or a transaction or report name works best.")),
@@ -87,12 +88,12 @@ def register(mcp) -> None:
         return _safe(community.search, query, limit=limit, min_kudos=min_kudos)
 
     @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False})
-    def web_status() -> dict:
+    def sap_help_status() -> dict:
         """Server status: version, source endpoints and cache state."""
         return {
             "version": __version__,
-            "help_search_endpoint": helpportal.SEARCH_URL,
-            "help_read_endpoints": [helpportal.METADATA_URL, helpportal.PAGE_URL],
+            "search_endpoint": helpportal.SEARCH_URL,
+            "read_endpoints": [helpportal.METADATA_URL, helpportal.PAGE_URL],
             "community_endpoint": community.LIQL_URL,
             "cache": cache_stats(),
             "note": ("The help.sap.com endpoints are not publicly documented and may "

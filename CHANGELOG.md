@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-07-27
+
+### Changed — breaking
+
+- Every tool is renamed to carry a `sap_` prefix. An MCP server has no idea what else
+  is connected in the user's client, and generic names collide: a sibling SAP Notes
+  server exposing plain `search` and `fetch` was found shadowing a web-search server's
+  tools of the same name, with the model routing to whichever it happened to see.
+
+  | Before | After |
+  |---|---|
+  | `help_search` | `sap_help_search` |
+  | `help_read` | `sap_help_read` |
+  | `community_search` | `sap_community_search` |
+  | `web_status` | `sap_help_status` |
+
+  Nothing else about the tools changed — same arguments, same responses. Update any
+  prompt, skill or instruction that names a tool explicitly; clients discover the new
+  names on their own. No aliases are kept: the user base is small enough that a clean
+  break now is cheaper than two names forever.
+
+- `sap_help_status` renames two response fields to stop mirroring tool names, so a
+  future rename does not ripple into the output: `help_search_endpoint` →
+  `search_endpoint`, `help_read_endpoints` → `read_endpoints`.
+
 ## [1.0.3] — 2026-07-27
 
 ### Fixed
@@ -83,6 +108,7 @@ First public release.
   (`.mcpb`, server type `uv`) for one-click installation in Claude Desktop.
 - Offline test suite and `python -m sap_help_mcp.probe` for live source checks.
 
+[1.1.0]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.1.0
 [1.0.3]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.3
 [1.0.2]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.2
 [1.0.1]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.1

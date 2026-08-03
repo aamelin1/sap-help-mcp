@@ -52,7 +52,7 @@ The layers do not leak into each other: `tools.py` knows nothing about HTTP,
 know who it serves. That is why the logic can be exercised from plain Python, which is
 exactly what the tests do.
 
-## help_search: searching help.sap.com
+## sap_help_search: searching help.sap.com
 
 One GET against the portal's search facade:
 
@@ -75,7 +75,7 @@ Expert Content wiki (FAQs, troubleshooting guides). That is precisely why this s
 carries no local mirror of that wiki: the online search returns the same pages, and it
 covers every space rather than whichever subset somebody once crawled.
 
-## help_read: reading a page
+## sap_help_read: reading a page
 
 The full text does not come back in one request. The portal hands it over in three
 steps:
@@ -96,7 +96,7 @@ Step 1 is local parsing of the `ref` (the URL from the search results). Steps 2 
 hit the network and are both cached. A failure at any step comes back as
 `{"error", "step"}` — the `step` field says exactly where it broke.
 
-## community_search: searching the forum
+## sap_community_search: searching the forum
 
 The Khoros API accepts LiQL, an SQL-like language over a `messages` table that holds
 everything — blogs, Q&A, discussions:
@@ -174,7 +174,7 @@ description.
   server holds no secrets, which is exactly what makes it safe to host for a team.
 * **A local knowledge base** — an earlier version had one (SQLite FTS5 over a crawl of
   the support wiki). It was removed once measurement showed the portal indexes
-  `SUPPORT_CONTENT` in full and `help_read` returns the same page text: the local copy
+  `SUPPORT_CONTENT` in full and `sap_help_read` returns the same page text: the local copy
   was a stale subset of the live source.
 * **State on disk** — none at all, only the in-memory cache. Containerising the server
   is therefore trivial, and a restart loses nothing.

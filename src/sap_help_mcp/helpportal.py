@@ -71,7 +71,7 @@ def search(query: str, *, product: str = "", version: str = "",
         out.append({
             "title": (h.get("title") or "").strip(),
             "url": page_url,
-            "ref": page_url,                       # pass this straight into help_read
+            "ref": page_url,                       # pass this straight into sap_help_read
             "product": h.get("product") or h.get("productId") or "",
             "version": h.get("version") or h.get("versionId") or "",
             "snippet": re.sub(r"<[^>]+>", "", h.get("snippet") or "").strip(),
@@ -87,19 +87,19 @@ def search(query: str, *, product: str = "", version: str = "",
         "found": len(out),
         "results": out,
         "source": "help.sap.com",
-        "hint": ("Full text: help_read(ref). Check the product field — the portal also "
-                 "returns ByDesign and cloud editions; for ECC / S/4HANA on premise "
-                 "look for SAP_ERP and SAP_S4HANA_ON_PREMISE."),
+        "hint": ("Full text: sap_help_read(ref). Check the product field — the portal "
+                 "also returns ByDesign and cloud editions; for ECC / S/4HANA on "
+                 "premise look for SAP_ERP and SAP_S4HANA_ON_PREMISE."),
     }
 
 
 def read(ref: str, *, part: int = 1) -> dict:
-    """Full text of a help.sap.com page by its URL (the ref from help_search)."""
+    """Full text of a help.sap.com page by its URL (the ref from sap_help_search)."""
     ref = (ref or "").strip()
     m = DOCS_PATH_RE.search(ref)
     if not m:
         return {"error": "This does not look like help.sap.com/docs/<product>/<deliverable>/"
-                         "<loio>.html — pass the ref field returned by help_search."}
+                         "<loio>.html — pass the ref field returned by sap_help_search."}
     product_url, deliverable_url, loio = m.group("product", "deliverable", "loio")
     # urlsplit + parse_qs rather than a regex: the values are percent-encoded, and a
     # trailing #fragment must not end up glued to the version.
@@ -159,5 +159,5 @@ def read(ref: str, *, part: int = 1) -> dict:
         "source": "help.sap.com",
     }
     if total_parts > 1:
-        out["more"] = f"Part {part} of {total_parts}; next: help_read(ref, part={part + 1})."
+        out["more"] = f"Part {part} of {total_parts}; next: sap_help_read(ref, part={part + 1})."
     return out

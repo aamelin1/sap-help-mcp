@@ -2,10 +2,13 @@
 """sap-help-mcp — an MCP server that searches SAP Help Portal and SAP Community.
 
 Four tools:
-    help_search       search help.sap.com (documentation + Support Content wiki)
-    help_read         full page text from help.sap.com as markdown
-    community_search  search the forum: blogs, Q&A, discussions
-    web_status        endpoints, version and cache state
+    sap_help_search       search help.sap.com (documentation + Support Content wiki)
+    sap_help_read         full page text from help.sap.com as markdown
+    sap_community_search  search the forum: blogs, Q&A, discussions
+    sap_help_status       endpoints, version and cache state
+
+Every name carries the sap_ prefix on purpose: an MCP server does not know what else
+lives in the user's client, and generic names collide. Renamed in 1.1.0.
 
 What is deliberately absent, and why:
     * SAP Notes — served by a separate MCP server, mcp-sap-notes: reading Notes needs
@@ -48,9 +51,9 @@ question yourself, into SAP terminology rather than word for word ('переоц
 are weak, make one or two more calls with different phrasings — that works better
 than anything else.
 
-Order of use: help_search -> help_read for the full text; community_search when you
-need field experience or the documentation is silent. SAP Note numbers found on those
-pages can be read through a separate MCP server for SAP Notes.
+Order of use: sap_help_search -> sap_help_read for the full text; sap_community_search
+when you need field experience or the documentation is silent. SAP Note numbers found
+on those pages can be read through a separate MCP server for SAP Notes.
 """
 
 # show_banner=False below, plus this: FastMCP's startup banner phones pypi.org to

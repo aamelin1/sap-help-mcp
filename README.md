@@ -36,7 +36,7 @@ the page it just read — with a link you can open.
 
 > **You:** How do I set up a substitution for the profit center in FI documents in ECC?
 >
-> **Assistant:** *(calls `help_search`, then `help_read`)* According to
+> **Assistant:** *(calls `sap_help_search`, then `sap_help_read`)* According to
 > *Substitution in Accounting Documents* (SAP_ERP 6.18) the callup point is 0002 …
 > — https://help.sap.com/docs/SAP_ERP/49fc4b036bc14cceb9bcf1a45e472f20/0eacc2531bb9b44ce10000000a174cb4.html?version=6.18.latest
 
@@ -48,10 +48,10 @@ about — and the forum, for the "has anyone actually hit this" half of the job.
 
 | Tool | What it does |
 |---|---|
-| `help_search(query, product?, version?, limit)` | Search help.sap.com: all SAP product documentation plus the Support Content wiki. |
-| `help_read(ref, part?)` | Fetch a full help.sap.com page as markdown, paginated for long pages. |
-| `community_search(query, limit, min_kudos)` | Search SAP Community blogs, Q&A and discussions, ranked on our side. |
-| `web_status()` | Version, source endpoints, cache state. Useful to confirm the connection works. |
+| `sap_help_search(query, product?, version?, limit)` | Search help.sap.com: all SAP product documentation plus the Support Content wiki. |
+| `sap_help_read(ref, part?)` | Fetch a full help.sap.com page as markdown, paginated for long pages. |
+| `sap_community_search(query, limit, min_kudos)` | Search SAP Community blogs, Q&A and discussions, ranked on our side. |
+| `sap_help_status()` | Version, source endpoints, cache state. Useful to confirm the connection works. |
 
 **No credentials, no local data, nothing written to disk.** The server only issues
 anonymous GET requests to public portal endpoints and caches responses in memory for
@@ -191,7 +191,7 @@ Point a client at the checkout with
 
 ## Check that it works
 
-Ask the AI assistant: **"call SAP-HELP web_status"**. You should get the server version and the
+Ask the AI assistant: **"call sap_help_status"**. You should get the server version and the
 portal endpoints back. Then try a real question, e.g. *"search SAP help for document
 splitting in new general ledger"*.
 
@@ -206,7 +206,7 @@ splitting in new general ledger"*.
   happily returns ByDesign pages.
 * **Rephrase once or twice if the results are thin.** It helps more than anything
   else, and the assistant is told to do it.
-* **The forum is the forum.** `community_search` returns field experience, not truth.
+* **The forum is the forum.** `sap_community_search` returns field experience, not truth.
   Each result carries a `match_score` and a kudos count so quality is visible.
 
 ---

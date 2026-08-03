@@ -98,7 +98,7 @@ On a machine that has never seen the project:
 
 * **Windows** — install uv, add the `uvx` block to
   `%APPDATA%\Claude\claude_desktop_config.json`, restart Claude Desktop fully, ask it
-  to *"call web_status"*.
+  to *"call sap_help_status"*.
 * **macOS** — download the `.mcpb` from the release, install it through
   **Settings → Extensions**, ask the same question.
 

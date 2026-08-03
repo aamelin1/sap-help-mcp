@@ -130,16 +130,16 @@ def test_server_exposes_exactly_four_tools():
     async def run():
         async with Client(server.mcp) as c:
             tools = sorted(t.name for t in await c.list_tools())
-            assert tools == ["community_search", "help_read",
-                             "help_search", "web_status"]
+            assert tools == ["sap_community_search", "sap_help_read",
+                             "sap_help_search", "sap_help_status"]
 
-            status = await c.call_tool("web_status", {})
-            assert "help.sap.com" in status.data["help_search_endpoint"]
+            status = await c.call_tool("sap_help_status", {})
+            assert "help.sap.com" in status.data["search_endpoint"]
             assert status.data["version"]
 
             with mock.patch.object(H, "get_json",
                                    lambda url, **kw: (fake_hit, None)):
-                res = await c.call_tool("help_search",
+                res = await c.call_tool("sap_help_search",
                                         {"query": "document splitting", "limit": 1})
             assert res.data["found"] == 1
             assert res.data["results"][0]["ref"].startswith("https://help.sap.com/docs/")
@@ -150,7 +150,7 @@ def test_server_exposes_exactly_four_tools():
 
 def test_scripts_and_styles_never_reach_the_markdown():
     """markdownify's strip= drops the tags but keeps their text, so they are cut out
-    before conversion. Regression guard for raw JS landing in help_read output."""
+    before conversion. Regression guard for raw JS landing in sap_help_read output."""
     from sap_help_mcp.fetcher import html_to_markdown
 
     md = html_to_markdown(
