@@ -29,6 +29,12 @@ All notable changes to this project are documented here. The format follows
   future rename does not ripple into the output: `help_search_endpoint` →
   `search_endpoint`, `help_read_endpoints` → `read_endpoints`.
 
+- The bundle's display name is shortened from "SAP Help & Community Search" to "SAP
+  Help". Claude Desktop derives the tool namespace from it, so the old one produced
+  `mcp__SAP_Help___Community_Search__sap_help_search` — twice the length, with three
+  underscores where the ampersand was. The companion SAP Notes bundle already reads
+  `mcp__SAP_Notes__…`; the two now match.
+
 ## [1.0.3] — 2026-07-27
 
 ### Fixed
