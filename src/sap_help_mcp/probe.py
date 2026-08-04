@@ -31,7 +31,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Query: {query!r}\n")
 
-    print("[1/3] help.sap.com — search")
+    print("[1/4] help.sap.com — search")
     if raw:
         print("      " + helpportal.search_url(query, product="SAP_ERP"))
     r = helpportal.search(query, product="SAP_ERP", limit=3)
@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
         for it in r.get("results", []):
             print(f"      - {it['title'][:70]}  [{it['product']} {it['version']}]")
 
-    print("\n[2/3] help.sap.com — read the first page")
+    print("\n[2/4] help.sap.com — read the first page")
     first = (r.get("results") or [{}])[0].get("ref")
     if not first:
         print("      skipped: the search returned nothing")
@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
                   f"chars in the first: {len(p['content'])}")
             print("      " + p["content"][:200].replace("\n", " "))
 
-    print("\n[3/3] community.sap.com — search")
+    print("\n[3/4] community.sap.com — search")
     if raw:
         print("      " + community.liql_url(query, limit=3))
     c = community.search(query, limit=3)
@@ -74,6 +74,24 @@ def main(argv: list[str] | None = None) -> int:
                   f"[{it['posted']}, +{it['kudos']}, score {it['match_score']}]")
         if c.get("partial"):
             print(f"      WARNING: {c['partial']}")
+
+    print("\n[4/4] community.sap.com — read the first thread")
+    first_post = (c.get("results") or [{}])[0].get("url")
+    if not first_post:
+        print("      skipped: the search returned nothing")
+    else:
+        if raw:
+            print(f"      url: {first_post}")
+            print("      " + community.thread_url(
+                community.MESSAGE_ID_RE.search(first_post).group(1)))
+        t = community.read(first_post)
+        if t.get("error"):
+            ok = False
+            print(f"      FAILED: {t['error']}")
+        else:
+            print(f"      \"{t['title'][:60]}\", replies: {t['replies']}, "
+                  f"solved: {t['solved']}, parts: {t['total_parts']}")
+            print("      " + t["content"][:200].replace("\n", " "))
 
     print("\n" + ("ALL SOURCES LIVE" if ok else "FAILURES — see above"))
     return 0 if ok else 1

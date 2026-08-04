@@ -132,6 +132,41 @@ flowchart TD
 
 `match_score` is returned to the model so it can see how real a match is.
 
+## sap_community_read: reading a thread
+
+The search only ever returns `search_snippet`, which the forum truncates after a line or
+two of the opening post — and on a forum the fix is usually several replies down. So the
+thread is fetched whole:
+
+```
+SELECT id, subject, body, post_time, depth, is_solution, author.login, kudos.sum(weight)
+FROM messages WHERE topic.id = '<id>' ORDER BY post_time ASC LIMIT 100
+```
+
+Three things about this were established by trying them against the live instance, and
+none is guessable:
+
+1. **`topic.id` filters, `conversation.id` does not.** `conversation.id` is selectable
+   per message and holds the root id, but using it in a `WHERE` is answered with
+   `Invalid query syntax`, code 604. `topic.id` returns the root post and every reply in
+   one request.
+2. **`depth` is nesting, not order.** A depth-2 reply answers the reply above it rather
+   than the question, so it is labelled — otherwise the transcript reads as if everyone
+   were addressing the original poster.
+3. **`is_solution` marks the accepted answer**, and the absence of one is worth saying
+   out loud: an unsolved thread is a set of suggestions, and the response says so.
+
+The id comes out of the URL with `-p/(\d+)`, which covers every shape the forum uses:
+`qaq-p` for questions, `td-p` for discussions, `ba-p` for blog articles, `m-p` for a
+single message. A link to a *reply* finds nothing, because `topic.id` only matches the
+root; that case is recognised and resolved through the reply's own `conversation.id`.
+
+Bodies are HTML and go through the same `html_to_markdown` as documentation pages, with
+one setting that matters here more than anywhere: markdownify escapes underscores by
+default, and nearly every SAP identifier has them, so `FAGL_BSBW_HISTRY` would reach the
+model as `FAGL\_BSBW\_HISTRY` and could be quoted back or fed into the next search that
+way.
+
 ## fetcher: the only module that speaks HTTP
 
 Standard library (`urllib`), no HTTP dependency. The contract is

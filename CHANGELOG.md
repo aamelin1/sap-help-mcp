@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-08-03
+
+### Added
+
+- `sap_community_read(ref, part?)` — a whole forum thread: the question and every reply
+  in order, each with its author, date and kudos, and the accepted answer marked. Until
+  now the forum could only be searched, and search returns `search_snippet`, which the
+  forum truncates after a line or two of the opening post. On a forum that is rarely
+  where the answer is; the fix tends to be several replies down, sometimes contradicting
+  the question's own assumptions. Half of what the server exists for was stopping at a
+  snippet.
+
+  The response also reports whether an accepted answer exists at all, because an
+  unsolved thread is a set of suggestions rather than an answer, and says so.
+
+  Threads are paginated like documentation pages, and a link pointing at a reply rather
+  than at the thread is resolved to its root.
+
+### Fixed
+
+- SAP identifiers keep their underscores. markdownify escapes them by default, so
+  `FAGL_BSBW_HISTRY` reached the model as `FAGL\_BSBW\_HISTRY` — which it could then
+  quote back or feed into the next search. Affected `sap_help_read` too, wherever an
+  identifier appeared outside a code span.
+
 ## [1.1.0] — 2026-07-27
 
 ### Changed — breaking
@@ -114,6 +139,7 @@ First public release.
   (`.mcpb`, server type `uv`) for one-click installation in Claude Desktop.
 - Offline test suite and `python -m sap_help_mcp.probe` for live source checks.
 
+[1.2.0]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.0
 [1.1.0]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.1.0
 [1.0.3]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.3
 [1.0.2]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.2

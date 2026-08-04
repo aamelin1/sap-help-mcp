@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """sap-help-mcp — an MCP server that searches SAP Help Portal and SAP Community.
 
-Four tools:
+Five tools:
     sap_help_search       search help.sap.com (documentation + Support Content wiki)
     sap_help_read         full page text from help.sap.com as markdown
     sap_community_search  search the forum: blogs, Q&A, discussions
+    sap_community_read    a whole forum thread — question and every reply
     sap_help_status       endpoints, version and cache state
 
 Every name carries the sap_ prefix on purpose: an MCP server does not know what else
@@ -52,8 +53,11 @@ are weak, make one or two more calls with different phrasings — that works bet
 than anything else.
 
 Order of use: sap_help_search -> sap_help_read for the full text; sap_community_search
-when you need field experience or the documentation is silent. SAP Note numbers found
-on those pages can be read through a separate MCP server for SAP Notes.
+-> sap_community_read when you need field experience or the documentation is silent.
+
+Both searches return snippets, not answers. Reading is not optional: a documentation
+page states the rule, and a forum thread usually hides the fix a few replies down. SAP
+Note numbers found along the way can be read through a separate MCP server for Notes.
 """
 
 # show_banner=False below, plus this: FastMCP's startup banner phones pypi.org to

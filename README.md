@@ -40,6 +40,10 @@ the page it just read — with a link you can open.
 > *Substitution in Accounting Documents* (SAP_ERP 6.18) the callup point is 0002 …
 > — https://help.sap.com/docs/SAP_ERP/49fc4b036bc14cceb9bcf1a45e472f20/0eacc2531bb9b44ce10000000a174cb4.html?version=6.18.latest
 
+Forum threads are read the same way, in full — which matters, because on a forum the
+answer that actually worked is rarely the first reply, and the search snippet stops well
+before it.
+
 It also reaches the **Support Content** space — the FAQs and troubleshooting guides
 written by SAP support, the ones that normally sit behind a search box nobody knows
 about — and the forum, for the "has anyone actually hit this" half of the job.
@@ -51,6 +55,7 @@ about — and the forum, for the "has anyone actually hit this" half of the job.
 | `sap_help_search(query, product?, version?, limit)` | Search help.sap.com: all SAP product documentation plus the Support Content wiki. |
 | `sap_help_read(ref, part?)` | Fetch a full help.sap.com page as markdown, paginated for long pages. |
 | `sap_community_search(query, limit, min_kudos)` | Search SAP Community blogs, Q&A and discussions, ranked on our side. |
+| `sap_community_read(ref, part?)` | Read a whole forum thread: the question and every reply, in order, with authors, kudos and the accepted answer marked. |
 | `sap_help_status()` | Version, source endpoints, cache state. Useful to confirm the connection works. |
 
 **No credentials, no local data, nothing written to disk.** The server only issues

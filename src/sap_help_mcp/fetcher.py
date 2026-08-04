@@ -149,7 +149,18 @@ def html_to_markdown(html: str) -> str:
 
     try:
         from markdownify import markdownify
-        return markdownify(html, heading_style="ATX", strip=["script", "style"]).strip()
+        return markdownify(
+            html,
+            heading_style="ATX",
+            strip=["script", "style"],
+            # SAP identifiers are mostly underscores — programs, tables, exception
+            # classes. markdownify escapes those by default, so FAGL_BSBW_HISTRY
+            # reaches the model as FAGL\_BSBW\_HISTRY and can be quoted back or fed
+            # into a follow-up search with the backslashes still in it. Asterisks go
+            # the same way and are no more welcome mid-sentence.
+            escape_underscores=False,
+            escape_asterisks=False,
+        ).strip()
     except Exception:
         text = re.sub(r"<br\s*/?>|</p>|</div>|</tr>", "\n", html, flags=re.I)
         text = re.sub(r"<[^>]+>", " ", text)

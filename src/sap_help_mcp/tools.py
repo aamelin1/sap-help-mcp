@@ -87,6 +87,28 @@ def register(mcp) -> None:
         """
         return _safe(community.search, query, limit=limit, min_kudos=min_kudos)
 
+    @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+    def sap_community_read(
+        ref: str = Field(description=(
+            "URL of a community.sap.com post, taken from the url field of a "
+            "sap_community_search result. A bare message id also works.")),
+        part: int = Field(1, ge=1, description=(
+            "Part number for long threads (see total_parts in the response).")),
+    ) -> dict:
+        """Read a whole SAP Community thread — the question and every reply.
+
+        Call this on anything sap_community_search turns up that looks relevant. The
+        search only returns a truncated snippet of the opening post, and on a forum
+        the answer that actually worked is usually several replies down, sometimes
+        contradicting the question's own assumptions.
+
+        Replies come in order, each with its author, date, kudos, and a marker when
+        the community accepted it as the solution. The solved field says whether an
+        accepted answer exists at all — if it does not, treat the thread as
+        suggestions rather than as an answer.
+        """
+        return _safe(community.read, ref, part=part)
+
     @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False})
     def sap_help_status() -> dict:
         """Server status: version, source endpoints and cache state."""

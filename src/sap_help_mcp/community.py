@@ -23,7 +23,7 @@ from __future__ import annotations
 import re
 from concurrent.futures import ThreadPoolExecutor
 
-from .fetcher import build_url, get_json
+from .fetcher import build_url, get_json, html_to_markdown
 
 BASE = "https://community.sap.com"
 LIQL_URL = f"{BASE}/api/2.0/search"
@@ -33,6 +33,24 @@ SELECT = ("SELECT id, subject, search_snippet, post_time, view_href, "
 STOP = {"the", "a", "an", "of", "in", "on", "for", "to", "and", "or", "is", "are",
         "how", "what", "why", "with", "not", "can", "sap", "error", "issue"}
 MAX_PARALLEL = 4
+
+# Reading a whole thread. Verified live against community.sap.com, and the shape is
+# not the obvious one: `conversation.id` can be SELECTed but is rejected as a
+# constraint ("Invalid query syntax", code 604) — `topic.id` is the one that filters,
+# and it returns the root post together with every reply in one request.
+THREAD_SELECT = ("SELECT id, subject, body, post_time, depth, is_solution, "
+                 "author.login, kudos.sum(weight)")
+# Same field list without is_solution. Selecting it alongside a topic.id constraint is
+# the one combination not exercised by hand, so a syntax error falls back to this
+# rather than failing the call: losing the solved marker beats losing the thread.
+THREAD_SELECT_MINIMAL = ("SELECT id, subject, body, post_time, depth, "
+                         "author.login, kudos.sum(weight)")
+THREAD_LIMIT = 100
+MAX_TEXT_CHARS = 12000
+
+# Khoros puts the message id last in every URL shape the forum uses: qaq-p for
+# questions, td-p for discussions, m-p for a single message, ba-p for blog articles.
+MESSAGE_ID_RE = re.compile(r"-p/(\d+)")
 
 
 def _escape(value: str) -> str:
@@ -144,7 +162,9 @@ def search(query: str, *, limit: int = 10, min_kudos: int = 0) -> dict:
         "candidates_examined": len(merged),
         "results": results,
         "source": "community.sap.com",
-        "hint": ("This is a forum: field experience and workarounds, not the last word — "
+        "hint": ("Snippets are truncated by the forum — the working answer is usually a few "
+                 "replies down, so call sap_community_read(url) on anything promising. "
+                 "This is a forum: field experience and workarounds, not the last word, so "
                  "verify against documentation or an SAP Note. match_score shows how many "
                  "query terms actually matched (subject counts more than snippet)."),
     }
@@ -153,4 +173,124 @@ def search(query: str, *, limit: int = 10, min_kudos: int = 0) -> dict:
     if not results:
         out["note"] = ("There were candidates, but all were dropped as single-common-word "
                        "matches. Rephrase more precisely, or give one or two key terms.")
+    return out
+
+
+def thread_url(message_id: str, *, with_solution_flag: bool = True) -> str:
+    select = THREAD_SELECT if with_solution_flag else THREAD_SELECT_MINIMAL
+    liql = (f"{select} FROM messages WHERE topic.id = '{_escape(message_id)}' "
+            f"ORDER BY post_time ASC LIMIT {THREAD_LIMIT}")
+    return build_url(LIQL_URL, {"q": liql})
+
+
+def _fetch_thread(message_id: str) -> tuple[list[dict], str | None]:
+    """Messages of one thread, oldest first. Retries without is_solution if the
+    instance rejects that field alongside a topic.id constraint."""
+    items, err = _items(thread_url(message_id))
+    if err and "syntax" in err.lower():
+        items, err = _items(thread_url(message_id, with_solution_flag=False))
+    return items, err
+
+
+def _resolve_topic_id(message_id: str) -> tuple[str | None, str | None]:
+    """The root id of the thread a message belongs to.
+
+    Needed when the link points at a reply rather than at the thread: topic.id only
+    matches the root. conversation.id is readable per message and holds exactly that
+    root id, which is why it is worth a second request.
+    """
+    liql = (f"SELECT id, conversation.id FROM messages "
+            f"WHERE id = '{_escape(message_id)}'")
+    items, err = _items(build_url(LIQL_URL, {"q": liql}))
+    if err:
+        return None, err
+    if not items:
+        return None, f"community.sap.com has no message {message_id}."
+    root = ((items[0].get("conversation") or {}).get("id"))
+    return (str(root) if root else None), None
+
+
+def _render(messages: list[dict]) -> str:
+    """The thread as markdown: the question, then the replies in order.
+
+    Reply subjects are all "Re: <the question>", so they are dropped; what a reader
+    needs per reply is who wrote it, when, whether it was accepted, and the text.
+    """
+    lines: list[str] = []
+    for index, message in enumerate(messages):
+        author = ((message.get("author") or {}).get("login") or "unknown").strip()
+        posted = (message.get("post_time") or "")[:10]
+        kudos = _kudos(message)
+        marks = []
+        if message.get("is_solution"):
+            marks.append("accepted solution")
+        if kudos:
+            marks.append(f"+{kudos}")
+        # depth is the nesting level, and a deep reply usually answers the one above
+        # rather than the question, which changes how the text reads.
+        depth = int(message.get("depth") or 0)
+        if depth > 1:
+            marks.append(f"reply depth {depth}")
+        suffix = f" ({', '.join(marks)})" if marks else ""
+
+        heading = "## Question" if index == 0 else f"## Reply {index}"
+        lines.append(f"{heading} — {author}, {posted}{suffix}")
+        body = html_to_markdown(message.get("body") or "").strip()
+        lines.append(body or "_(empty)_")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def read(ref: str, *, part: int = 1) -> dict:
+    """A whole SAP Community thread as markdown. Always returns a dict."""
+    ref = (ref or "").strip()
+    match = MESSAGE_ID_RE.search(ref)
+    message_id = match.group(1) if match else (ref if ref.isdigit() else "")
+    if not message_id:
+        return {"error": "Pass the url field from a sap_community_search result (or a "
+                         "bare message id). Expected something ending in -p/<number>, "
+                         f"got {ref[:80]!r}."}
+
+    messages, err = _fetch_thread(message_id)
+    if err:
+        return {"error": err, "endpoint": LIQL_URL}
+
+    # A link to a reply finds nothing, because topic.id only matches the root.
+    if not messages:
+        root_id, err = _resolve_topic_id(message_id)
+        if err:
+            return {"error": err, "endpoint": LIQL_URL}
+        if root_id and root_id != message_id:
+            messages, err = _fetch_thread(root_id)
+            if err:
+                return {"error": err, "endpoint": LIQL_URL}
+    if not messages:
+        return {"error": f"No thread found for message {message_id}. The post may have "
+                         "been removed, or the link may not be a forum message."}
+
+    messages.sort(key=lambda m: (m.get("post_time") or ""))
+    root = messages[0]
+    text = _render(messages)
+    total_parts = max(1, (len(text) + MAX_TEXT_CHARS - 1) // MAX_TEXT_CHARS)
+    part = max(1, min(int(part), total_parts))
+
+    out = {
+        "title": (root.get("subject") or "").strip(),
+        "url": ref if ref.startswith("http") else f"{BASE}/t5/-/-/m-p/{message_id}",
+        "replies": len(messages) - 1,
+        "solved": any(m.get("is_solution") for m in messages),
+        "part": part,
+        "total_parts": total_parts,
+        "content": text[(part - 1) * MAX_TEXT_CHARS: part * MAX_TEXT_CHARS],
+        "source": "community.sap.com",
+    }
+    if total_parts > 1:
+        out["more"] = (f"Part {part} of {total_parts}; next: "
+                       f"sap_community_read(ref, part={part + 1}).")
+    if len(messages) >= THREAD_LIMIT:
+        out["truncated"] = (f"Only the first {THREAD_LIMIT} messages of this thread were "
+                            "read; it is longer.")
+    if not out["solved"]:
+        out["hint"] = ("Nothing here is marked as an accepted solution, so treat the "
+                       "replies as suggestions and verify before acting on them.")
     return out
