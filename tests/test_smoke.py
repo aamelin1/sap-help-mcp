@@ -191,7 +191,36 @@ def test_unsolved_thread_says_so():
     with mock.patch.object(C, "_items", lambda url: (list(unsolved), None)):
         result = C.read("https://community.sap.com/t5/x/y/qaq-p/12175476")
     assert result["solved"] is False
+    assert result["kind"] == "question"
     assert "accepted solution" in result["hint"]
+
+
+def test_a_blog_post_is_not_an_unsolved_question():
+    """Search returns blog articles too. Calling one a Question, and its lack of
+    comments 'unsolved', was wrong on both counts — seen on a real article."""
+    article = dict(REAL_THREAD[0], message_type="blog_article_message",
+                   subject="Reset clearing of document that has Withholding Tax items")
+    with mock.patch.object(C, "_items", lambda url: ([article], None)):
+        result = C.read("https://community.sap.com/t5/erp-blog-posts/x/ba-p/12972431")
+    assert result["kind"] == "article"
+    assert result["content"].startswith("## Article — ")
+    assert "hint" not in result
+
+
+def test_blog_comments_are_comments_not_replies():
+    article = dict(REAL_THREAD[0], message_type="blog_article_message")
+    comment = dict(REAL_THREAD[1], message_type="blog_reply_message", is_solution=False)
+    with mock.patch.object(C, "_items", lambda url: ([article, comment], None)):
+        content = C.read("https://community.sap.com/t5/x/y/ba-p/1")["content"]
+    assert "## Comment 1 — " in content
+    assert "## Reply" not in content
+
+
+def test_a_thread_nobody_answered_gets_no_warning():
+    with mock.patch.object(C, "_items", lambda url: ([REAL_THREAD[0]], None)):
+        result = C.read("https://community.sap.com/t5/x/y/qaq-p/12175476")
+    assert result["replies"] == 0
+    assert "hint" not in result
 
 
 def test_long_thread_is_paginated():

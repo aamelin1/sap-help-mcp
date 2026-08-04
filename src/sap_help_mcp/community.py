@@ -210,12 +210,29 @@ def _resolve_topic_id(message_id: str) -> tuple[str | None, str | None]:
     return (str(root) if root else None), None
 
 
+def _is_forum_thread(root: dict) -> bool:
+    """Whether this is a question with replies rather than a published article.
+
+    Search returns both, and they read differently: calling a blog post a "Question"
+    and its lack of replies "unsolved" is simply wrong. message_type arrives on every
+    message without being selected — 'forum_topic_message' for a question,
+    'forum_reply_message' for a reply. The check stays loose about what a blog calls
+    itself, because only the forum values have been seen for certain.
+    """
+    kind = str(root.get("message_type") or "")
+    return "forum" in kind or "topic" in kind
+
+
 def _render(messages: list[dict]) -> str:
-    """The thread as markdown: the question, then the replies in order.
+    """The thread as markdown: the opening post, then the replies in order.
 
     Reply subjects are all "Re: <the question>", so they are dropped; what a reader
     needs per reply is who wrote it, when, whether it was accepted, and the text.
     """
+    forum = _is_forum_thread(messages[0])
+    first_label = "Question" if forum else "Article"
+    reply_label = "Reply" if forum else "Comment"
+
     lines: list[str] = []
     for index, message in enumerate(messages):
         author = ((message.get("author") or {}).get("login") or "unknown").strip()
@@ -233,7 +250,8 @@ def _render(messages: list[dict]) -> str:
             marks.append(f"reply depth {depth}")
         suffix = f" ({', '.join(marks)})" if marks else ""
 
-        heading = "## Question" if index == 0 else f"## Reply {index}"
+        heading = (f"## {first_label}" if index == 0
+                   else f"## {reply_label} {index}")
         lines.append(f"{heading} — {author}, {posted}{suffix}")
         body = html_to_markdown(message.get("body") or "").strip()
         lines.append(body or "_(empty)_")
@@ -274,9 +292,11 @@ def read(ref: str, *, part: int = 1) -> dict:
     total_parts = max(1, (len(text) + MAX_TEXT_CHARS - 1) // MAX_TEXT_CHARS)
     part = max(1, min(int(part), total_parts))
 
+    forum = _is_forum_thread(root)
     out = {
         "title": (root.get("subject") or "").strip(),
         "url": ref if ref.startswith("http") else f"{BASE}/t5/-/-/m-p/{message_id}",
+        "kind": "question" if forum else "article",
         "replies": len(messages) - 1,
         "solved": any(m.get("is_solution") for m in messages),
         "part": part,
@@ -290,7 +310,9 @@ def read(ref: str, *, part: int = 1) -> dict:
     if len(messages) >= THREAD_LIMIT:
         out["truncated"] = (f"Only the first {THREAD_LIMIT} messages of this thread were "
                             "read; it is longer.")
-    if not out["solved"]:
+    # Only a question can lack an accepted answer. Saying it about a blog post, or
+    # about a thread nobody replied to, is noise that reads as a warning.
+    if forum and not out["solved"] and out["replies"]:
         out["hint"] = ("Nothing here is marked as an accepted solution, so treat the "
                        "replies as suggestions and verify before acting on them.")
     return out

@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] — 2026-08-03
+
+### Fixed
+
+- A blog article is no longer presented as an unanswered question. `sap_community_search`
+  returns blog posts alongside Q&A, and reading one labelled it "Question", reported
+  `replies: 0` and then warned that nothing was marked as an accepted solution — advice
+  that makes no sense for a published article. Threads now report `kind`, headings say
+  Article and Comment where that is what they are, and the accepted-answer warning is
+  limited to questions that actually have replies. Found by reading a real blog post
+  rather than a fixture.
+
 ## [1.2.0] — 2026-08-03
 
 ### Added
@@ -139,6 +151,7 @@ First public release.
   (`.mcpb`, server type `uv`) for one-click installation in Claude Desktop.
 - Offline test suite and `python -m sap_help_mcp.probe` for live source checks.
 
+[1.2.1]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.1
 [1.2.0]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.0
 [1.1.0]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.1.0
 [1.0.3]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.0.3
