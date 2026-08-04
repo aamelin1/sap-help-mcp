@@ -63,8 +63,10 @@ anonymous GET requests to public portal endpoints and caches responses in memory
 six hours.
 
 **SAP Notes are not included.** Reading Notes requires a personal S-user, and this
-server deliberately holds no secrets. Use [mcp-sap-notes](https://github.com/marianfoo/mcp-sap-notes)
-alongside it — this server surfaces the Note numbers, that one opens them.
+server deliberately holds no secrets. Run
+[sap-notes-mcp](https://github.com/aamelin1/sap-notes-mcp) alongside it — this server
+surfaces the Note numbers, that one opens them. Its tools carry the same `sap_` prefix,
+so the two read as one set.
 
 ---
 

@@ -205,8 +205,10 @@ description.
 
 ## What is deliberately absent
 
-* **SAP Notes** — served by a separate MCP server. Notes need a personal S-user; this
-  server holds no secrets, which is exactly what makes it safe to host for a team.
+* **SAP Notes** — served by a separate MCP server,
+  [sap-notes-mcp](https://github.com/aamelin1/sap-notes-mcp). Notes need a personal
+  S-user; this server holds no secrets, which is exactly what makes it safe to host for
+  a team. Splitting them along the credentials line is the whole reason there are two.
 * **A local knowledge base** — an earlier version had one (SQLite FTS5 over a crawl of
   the support wiki). It was removed once measurement showed the portal indexes
   `SUPPORT_CONTENT` in full and `sap_help_read` returns the same page text: the local copy

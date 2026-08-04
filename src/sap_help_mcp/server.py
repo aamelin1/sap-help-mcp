@@ -12,8 +12,9 @@ Every name carries the sap_ prefix on purpose: an MCP server does not know what 
 lives in the user's client, and generic names collide. Renamed in 1.1.0.
 
 What is deliberately absent, and why:
-    * SAP Notes — served by a separate MCP server, mcp-sap-notes: reading Notes needs
-      a personal S-user, and this server holds no credentials of any kind.
+    * SAP Notes — served by a separate MCP server, github.com/aamelin1/sap-notes-mcp:
+      reading Notes needs a personal S-user, and this server holds no credentials of
+      any kind.
     * A local knowledge base — help.sap.com indexes the SUPPORT_CONTENT space itself
       and returns the same pages with full text, so a local copy was pure duplication.
 
