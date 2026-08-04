@@ -197,8 +197,10 @@ def test_unsolved_thread_says_so():
 
 def test_a_blog_post_is_not_an_unsolved_question():
     """Search returns blog articles too. Calling one a Question, and its lack of
-    comments 'unsolved', was wrong on both counts — seen on a real article."""
-    article = dict(REAL_THREAD[0], message_type="blog_article_message",
+    comments 'unsolved', was wrong on both counts — seen on a real article. The URL
+    marker decides: message_type comes back as a forum type even for articles, which
+    a first attempt at this relied on and got wrong."""
+    article = dict(REAL_THREAD[0],
                    subject="Reset clearing of document that has Withholding Tax items")
     with mock.patch.object(C, "_items", lambda url: ([article], None)):
         result = C.read("https://community.sap.com/t5/erp-blog-posts/x/ba-p/12972431")
@@ -208,9 +210,8 @@ def test_a_blog_post_is_not_an_unsolved_question():
 
 
 def test_blog_comments_are_comments_not_replies():
-    article = dict(REAL_THREAD[0], message_type="blog_article_message")
-    comment = dict(REAL_THREAD[1], message_type="blog_reply_message", is_solution=False)
-    with mock.patch.object(C, "_items", lambda url: ([article, comment], None)):
+    comment = dict(REAL_THREAD[1], is_solution=False)
+    with mock.patch.object(C, "_items", lambda url: ([REAL_THREAD[0], comment], None)):
         content = C.read("https://community.sap.com/t5/x/y/ba-p/1")["content"]
     assert "## Comment 1 — " in content
     assert "## Reply" not in content

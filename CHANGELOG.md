@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] — 2026-08-03
+
+### Fixed
+
+- Blog articles really are labelled as articles now. 1.2.1 decided this from
+  `message_type`, which for a blog post still comes back as a forum type, so a live
+  article was read as a "Question" all the same. The URL says it plainly and is what
+  search hands over: `ba-p` is an article, `qaq-p` a question, `td-p` a discussion.
+
 ## [1.2.1] — 2026-08-03
 
 ### Fixed
@@ -151,6 +160,7 @@ First public release.
   (`.mcpb`, server type `uv`) for one-click installation in Claude Desktop.
 - Offline test suite and `python -m sap_help_mcp.probe` for live source checks.
 
+[1.2.2]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.2
 [1.2.1]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.1
 [1.2.0]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.0
 [1.1.0]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.1.0

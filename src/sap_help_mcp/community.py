@@ -48,9 +48,15 @@ THREAD_SELECT_MINIMAL = ("SELECT id, subject, body, post_time, depth, "
 THREAD_LIMIT = 100
 MAX_TEXT_CHARS = 12000
 
-# Khoros puts the message id last in every URL shape the forum uses: qaq-p for
-# questions, td-p for discussions, m-p for a single message, ba-p for blog articles.
-MESSAGE_ID_RE = re.compile(r"-p/(\d+)")
+# Khoros puts the message id last in every URL shape the forum uses, behind a marker
+# that says what kind of thing it is: qaq-p for questions, td-p for discussions,
+# ba-p for blog articles, m-p for an individual message.
+MESSAGE_ID_RE = re.compile(r"\b(qaq|td|ba|m)-p/(\d+)")
+# Blog articles are published, not asked. Labelling one "Question" and its lack of
+# comments "unsolved" is wrong on both counts, and the URL is the only signal that says
+# so reliably: message_type comes back as a forum type even for articles, which an
+# earlier attempt at this got wrong.
+ARTICLE_MARKERS = {"ba"}
 
 
 def _escape(value: str) -> str:
@@ -210,26 +216,12 @@ def _resolve_topic_id(message_id: str) -> tuple[str | None, str | None]:
     return (str(root) if root else None), None
 
 
-def _is_forum_thread(root: dict) -> bool:
-    """Whether this is a question with replies rather than a published article.
-
-    Search returns both, and they read differently: calling a blog post a "Question"
-    and its lack of replies "unsolved" is simply wrong. message_type arrives on every
-    message without being selected — 'forum_topic_message' for a question,
-    'forum_reply_message' for a reply. The check stays loose about what a blog calls
-    itself, because only the forum values have been seen for certain.
-    """
-    kind = str(root.get("message_type") or "")
-    return "forum" in kind or "topic" in kind
-
-
-def _render(messages: list[dict]) -> str:
+def _render(messages: list[dict], *, forum: bool = True) -> str:
     """The thread as markdown: the opening post, then the replies in order.
 
     Reply subjects are all "Re: <the question>", so they are dropped; what a reader
     needs per reply is who wrote it, when, whether it was accepted, and the text.
     """
-    forum = _is_forum_thread(messages[0])
     first_label = "Question" if forum else "Article"
     reply_label = "Reply" if forum else "Comment"
 
@@ -263,11 +255,15 @@ def read(ref: str, *, part: int = 1) -> dict:
     """A whole SAP Community thread as markdown. Always returns a dict."""
     ref = (ref or "").strip()
     match = MESSAGE_ID_RE.search(ref)
-    message_id = match.group(1) if match else (ref if ref.isdigit() else "")
-    if not message_id:
+    if match:
+        marker, message_id = match.group(1), match.group(2)
+    elif ref.isdigit():
+        marker, message_id = "", ref
+    else:
         return {"error": "Pass the url field from a sap_community_search result (or a "
                          "bare message id). Expected something ending in -p/<number>, "
                          f"got {ref[:80]!r}."}
+    forum = marker not in ARTICLE_MARKERS
 
     messages, err = _fetch_thread(message_id)
     if err:
@@ -288,11 +284,10 @@ def read(ref: str, *, part: int = 1) -> dict:
 
     messages.sort(key=lambda m: (m.get("post_time") or ""))
     root = messages[0]
-    text = _render(messages)
+    text = _render(messages, forum=forum)
     total_parts = max(1, (len(text) + MAX_TEXT_CHARS - 1) // MAX_TEXT_CHARS)
     part = max(1, min(int(part), total_parts))
 
-    forum = _is_forum_thread(root)
     out = {
         "title": (root.get("subject") or "").strip(),
         "url": ref if ref.startswith("http") else f"{BASE}/t5/-/-/m-p/{message_id}",
