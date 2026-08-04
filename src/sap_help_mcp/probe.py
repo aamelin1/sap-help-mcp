@@ -44,12 +44,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"      - {it['title'][:70]}  [{it['product']} {it['version']}]")
 
     print("\n[2/4] help.sap.com — read the first page")
-    first = (r.get("results") or [{}])[0].get("ref")
+    first = (r.get("results") or [{}])[0].get("url")
     if not first:
         print("      skipped: the search returned nothing")
     else:
         if raw:
-            print(f"      ref: {first}")
+            print(f"      url: {first}")
         p = helpportal.read(first)
         if p.get("error"):
             ok = False

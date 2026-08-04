@@ -53,9 +53,9 @@ about — and the forum, for the "has anyone actually hit this" half of the job.
 | Tool | What it does |
 |---|---|
 | `sap_help_search(query, product?, version?, limit)` | Search help.sap.com: all SAP product documentation plus the Support Content wiki. |
-| `sap_help_read(ref, part?)` | Fetch a full help.sap.com page as markdown, paginated for long pages. |
+| `sap_help_read(url, part?)` | Fetch a full help.sap.com page as markdown, paginated for long pages. |
 | `sap_community_search(query, limit, min_kudos)` | Search SAP Community blogs, Q&A and discussions, ranked on our side. |
-| `sap_community_read(ref, part?)` | Read a whole forum thread: the question and every reply, in order, with authors, kudos and the accepted answer marked. |
+| `sap_community_read(url, part?)` | Read a whole forum thread: the question and every reply, in order, with authors, kudos and the accepted answer marked. |
 | `sap_help_status()` | Version, source endpoints, cache state. Useful to confirm the connection works. |
 
 **No credentials, no local data, nothing written to disk.** The server only issues

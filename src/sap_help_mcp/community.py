@@ -301,7 +301,7 @@ def read(ref: str, *, part: int = 1) -> dict:
     }
     if total_parts > 1:
         out["more"] = (f"Part {part} of {total_parts}; next: "
-                       f"sap_community_read(ref, part={part + 1}).")
+                       f"sap_community_read(url, part={part + 1}).")
     if len(messages) >= THREAD_LIMIT:
         out["truncated"] = (f"Only the first {THREAD_LIMIT} messages of this thread were "
                             "read; it is longer.")

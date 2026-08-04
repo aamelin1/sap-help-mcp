@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] — 2026-08-03
+
+### Fixed
+
+- The read tools take `url`, the same name the searches return, and accept `ref` as an
+  alias. Observed in a local model's trace: `sap_help_search` offered both `url` and
+  `ref` with identical values, the model passed `url` into a parameter declared as
+  `ref`, and three tool calls were rejected before it guessed. On the community side the
+  mismatch was guaranteed — search returns only `url`, while the read tool demanded
+  `ref`.
+- `sap_help_search` results no longer carry a duplicate `ref` field. Two names for one
+  value is what created the choice in the first place.
+
 ## [1.2.2] — 2026-08-03
 
 ### Fixed
@@ -160,6 +173,7 @@ First public release.
   (`.mcpb`, server type `uv`) for one-click installation in Claude Desktop.
 - Offline test suite and `python -m sap_help_mcp.probe` for live source checks.
 
+[1.2.3]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.3
 [1.2.2]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.2
 [1.2.1]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.1
 [1.2.0]: https://github.com/aamelin1/sap-help-mcp/releases/tag/v1.2.0

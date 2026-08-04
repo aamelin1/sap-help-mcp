@@ -330,7 +330,10 @@ def test_server_exposes_exactly_five_tools():
                 res = await c.call_tool("sap_help_search",
                                         {"query": "document splitting", "limit": 1})
             assert res.data["found"] == 1
-            assert res.data["results"][0]["ref"].startswith("https://help.sap.com/docs/")
+            assert res.data["results"][0]["url"].startswith("https://help.sap.com/docs/")
+            # One name only. Offering both url and ref made a local model pass "url"
+            # into a parameter called "ref", and three tool calls were rejected.
+            assert "ref" not in res.data["results"][0]
 
     asyncio.run(run())
     assert fetcher.cache_stats()["entries"] >= 0    # cache survived the round trip
@@ -428,3 +431,42 @@ def test_ref_query_parsing_survives_a_fragment():
         H.read(ref)
     assert "version=6.18.latest&" in captured["url"] + "&"
     assert "section-2" not in captured["url"]
+
+
+def test_both_read_tools_accept_url_or_ref():
+    """Search returns `url`; the read tools used to demand `ref`. A local model passed
+    the field it had been given and its calls were rejected — three in a row. Either
+    name is accepted now, and `url` is the one advertised."""
+    import asyncio
+
+    from fastmcp import Client
+
+    from sap_help_mcp import server
+
+    page = {"title": "T", "url": "u", "product": "p", "version": "v",
+            "part": 1, "total_parts": 1, "content": "body", "source": "help.sap.com"}
+    thread = {"title": "T", "url": "u", "kind": "question", "replies": 0,
+              "solved": False, "part": 1, "total_parts": 1, "content": "body",
+              "source": "community.sap.com"}
+    doc_url = "https://help.sap.com/docs/SAP_ERP/x/y.html"
+    post_url = "https://community.sap.com/t5/x/y/qaq-p/1"
+
+    async def run():
+        async with Client(server.mcp) as c:
+            with mock.patch.object(H, "read", lambda ref, **kw: dict(page)), \
+                 mock.patch.object(C, "read", lambda ref, **kw: dict(thread)):
+                for name, args in [
+                    ("sap_help_read", {"url": doc_url}),
+                    ("sap_help_read", {"ref": doc_url}),
+                    ("sap_community_read", {"url": post_url}),
+                    ("sap_community_read", {"ref": post_url}),
+                ]:
+                    result = await c.call_tool(name, args)
+                    assert "error" not in result.data, (name, args)
+
+                # Neither name given is a usable error, not a crash.
+                for name in ("sap_help_read", "sap_community_read"):
+                    result = await c.call_tool(name, {})
+                    assert "url" in result.data["error"]
+
+    asyncio.run(run())

@@ -50,7 +50,7 @@ def register(mcp) -> None:
         documentation and the Support Content space: the FAQs and troubleshooting
         guides written by SAP support.
 
-        Next step: sap_help_read(ref) for the full page text. If the documentation is
+        Next step: sap_help_read(url) for the full page text. If the documentation is
         silent on real-world practice, try sap_community_search.
         """
         return _safe(helpportal.search, query, product=product or "",
@@ -58,14 +58,18 @@ def register(mcp) -> None:
 
     @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
     def sap_help_read(
-        ref: str = Field(description=(
-            "URL of a help.sap.com page, taken from the ref field of a "
-            "sap_help_search result.")),
+        url: Optional[str] = Field(None, description=(
+            "URL of a help.sap.com page — the url field of a sap_help_search result.")),
         part: int = Field(1, ge=1, description=(
             "Part number for long pages (see total_parts in the response).")),
+        ref: Optional[str] = Field(None, description=(
+            "Deprecated alias for url. Either name works.")),
     ) -> dict:
         """Read a full help.sap.com page as markdown — use after sap_help_search."""
-        return _safe(helpportal.read, ref, part=part)
+        target = url or ref
+        if not target:
+            return {"error": "Pass url — the url field of a sap_help_search result."}
+        return _safe(helpportal.read, target, part=part)
 
     @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
     def sap_community_search(
@@ -89,11 +93,13 @@ def register(mcp) -> None:
 
     @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
     def sap_community_read(
-        ref: str = Field(description=(
-            "URL of a community.sap.com post, taken from the url field of a "
+        url: Optional[str] = Field(None, description=(
+            "URL of a community.sap.com post — the url field of a "
             "sap_community_search result. A bare message id also works.")),
         part: int = Field(1, ge=1, description=(
             "Part number for long threads (see total_parts in the response).")),
+        ref: Optional[str] = Field(None, description=(
+            "Deprecated alias for url. Either name works.")),
     ) -> dict:
         """Read a whole SAP Community thread — the question and every reply.
 
@@ -107,7 +113,11 @@ def register(mcp) -> None:
         accepted answer exists at all — if it does not, treat the thread as
         suggestions rather than as an answer.
         """
-        return _safe(community.read, ref, part=part)
+        target = url or ref
+        if not target:
+            return {"error": "Pass url — the url field of a sap_community_search "
+                             "result, or a bare message id."}
+        return _safe(community.read, target, part=part)
 
     @mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False})
     def sap_help_status() -> dict:
